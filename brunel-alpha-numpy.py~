@@ -77,7 +77,7 @@ C_tot = int(CI+CE)  # total number of synapses per neuron
 # Initialize the parameters of the integrate and fire neuron
 tauSyn = 0.5
 CMem = 250.0
-tauMem = 20.0*3.0**(0/10.0)
+tauMem = 20.0*3.0**(10/10.0)
 theta  = 20.0
 J      = 0.1 # postsynaptic amplitude in mV
 

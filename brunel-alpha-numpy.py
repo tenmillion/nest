@@ -91,13 +91,11 @@ nu_th  = (theta * CMem) / (J_ex*CE*numpy.exp(1)*tauMem*tauSyn)
 nu_ex  = eta*nu_th
 p_rate = 1000.0*nu_ex*CE*1.5
 
+nest.SetKernelStatus({"resolution": dt, "print_time": True})
 
 tdatetime = datetime.now()
 tstr = tdatetime.strftime('_%m%d-%H%M-%S_')
-
 fnprefix = "tau"+str('%.1f'%tauMem)+"g"+str('%.1f'%g)+"in"+str('%.1f'%p_rate)+tstr
-
-nest.SetKernelStatus({"resolution": dt, "print_time": True})
 nest.SetKernelStatus({"data_path": "output", "data_prefix": fnprefix})
 
 print "Building network"

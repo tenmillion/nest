@@ -1,0 +1,6 @@
+Enable PyNEST       : Yes (Python: /usr/bin/python)
+User modules        : None
+Extra modules       : models precise topology conngen
+Dynamic modules     : None
+
+
