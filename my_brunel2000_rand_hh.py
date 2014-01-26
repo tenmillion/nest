@@ -39,14 +39,14 @@ delay   = 1.5   # synaptic delay in ms
 V_init	= -60.	# Initial membrane potential
 V_range = 20.	# Range of initial membrane potential
 d_range = 0.	# Range of synaptic delay (0 to 1)
-N_E = 0
-N_I = 100
+N_E = 100
+N_I = 0
 N_neurons = N_E+N_I
 
-M_syn_EE = 0. # Average number of ex-ex syns
+M_syn_EE = 60. # Average number of ex-ex syns
 M_syn_EI = 0.
 M_syn_IE = 0.
-M_syn_II = 60.
+M_syn_II = 0.
 
 if N_E > 0:
  p_conn_EE = M_syn_EE/float(N_E) # Probability of a synapse existing between ex-ex
@@ -132,7 +132,6 @@ if N_E > 0:
   for e in range(0,N_E):
    row.append(flip(p_conn_EE))
   conn_EE.append(row)
- print conn_EE
 
 if N_E > 0 and N_I > 0:
  conn_EI = []
@@ -167,15 +166,23 @@ if N_I > 0:
   n_conn_IE = numpy.sum(conn_IE,1)
  n_conn_II = numpy.sum(conn_II,1)
 
-#print "Numbers of targets and mean/var of numbers of sources of EE, EI, IE, II connections:"
-#print len(n_conn_EE), len(n_conn_EI), len(n_conn_IE), len(n_conn_II)
-#print numpy.mean(n_conn_EE), numpy.mean(n_conn_EI), numpy.mean(n_conn_IE), numpy.mean(n_conn_II)
-#print numpy.var(n_conn_EE), numpy.var(n_conn_EI), numpy.var(n_conn_IE), numpy.var(n_conn_II)
+if N_E > 0 and N_I > 0: 
+ print "Numbers of targets and mean/var of numbers of sources of EE, EI, IE, II connections:"
+ print len(n_conn_EE), len(n_conn_EI), len(n_conn_IE), len(n_conn_II)
+ print numpy.mean(n_conn_EE), numpy.mean(n_conn_EI), numpy.mean(n_conn_IE), numpy.mean(n_conn_II)
+ print numpy.var(n_conn_EE), numpy.var(n_conn_EI), numpy.var(n_conn_IE), numpy.var(n_conn_II)
 
-print "Numbers of targets and mean/var of numbers of sources of II connections:"
-print len(n_conn_II)
-print numpy.mean(n_conn_II)
-print numpy.var(n_conn_II)
+elif N_E > 0:
+ print "Numbers of targets and mean/var of numbers of sources of EE connections:"
+ print len(n_conn_EE)
+ print numpy.mean(n_conn_EE)
+ print numpy.var(n_conn_EE)
+
+elif N_I > 0:
+ print "Numbers of targets and mean/var of numbers of sources of II connections:"
+ print len(n_conn_II)
+ print numpy.mean(n_conn_II)
+ print numpy.var(n_conn_II)
 
 # Make synaptic connections
 i = 0
