@@ -31,10 +31,10 @@ import sys
 phi		= float(sys.argv[1])    # Default 1.
 g       = float(sys.argv[2])    # Ratio of IPSP to EPSP amplitude: J_I/J_E
 p_rate  = float(sys.argv[3])    # rate of external population
-delay   = 1.5    # synaptic delay in ms
+delay   = 1.5   # synaptic delay in ms
 V_init	= -65.	# Initial membrane potential, set to same value as E_L
 E_L	    = -65.
-V_range = 10.	 # Range of initial membrane potential
+V_range = 10.	# Range of initial membrane potential
 d_range = 0.	# Range of synaptic delay (0 to 1)
 N_E = 200
 N_I = 50
