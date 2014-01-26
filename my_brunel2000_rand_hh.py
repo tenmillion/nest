@@ -31,19 +31,27 @@ import sys
 phi		= float(sys.argv[1])    # Default 1.
 g       = float(sys.argv[2])    # Ratio of IPSP to EPSP amplitude: J_I/J_E
 p_rate  = float(sys.argv[3])    # rate of external population
+
 delay   = 1.5   # synaptic delay in ms
 V_init	= -65.	# Initial membrane potential, set to same value as E_L
 E_L	    = -65.
 V_range = 10.	# Range of initial membrane potential
 d_range = 0.	# Range of synaptic delay (0 to 1)
-N_E = 200
-N_I = 50
+N_E = 400
+N_I = 100
 N_neurons = N_E+N_I
 
-C_E    = N_E/10 # number of excitatory synapses per neuron
-C_I    = N_I/10 # number of inhibitory synapses per neuron  
+M_syn_EE = 1. # Average number of ex-ex syns
+M_syn_EI = 1.
+M_syn_IE = 1.
+M_syn_II = 1.
 
-J_E  = 10.
+p_conn_EE = M_syn_EE/float(N_E) # Probability of a synapse existing between ex-ex
+p_conn_EI = M_syn_EI/float(N_E)
+p_conn_IE = M_syn_IE/float(N_I)
+p_conn_II = M_syn_II/float(N_I)
+
+J_E  = 1. # Should be 0.1 mS/cm^2. Not sure what this corresponds to in NEST.
 J_I  = -g*J_E
 
 # Set parameters of the NEST simulation kernel
@@ -65,66 +73,126 @@ nest.SetKernelStatus({'grng_seed': ms+n_vp,
 #nest.SetDefaults("iaf_psc_delta", {"C_m": 1.0, "tau_m":20*phi})
 #nodes   = nest.Create("iaf_psc_delta",N_neurons)
 
-nest.SetDefaults("hh_psc_alpha", 
-                 {"E_L": -54.402,
-				  "C_m": 100.0,
-				  "phi_t": phi,
-                  "V_1": 40.0, # Using Hodgkin-Huxley
-                  "V_2": 65.0,
-                  "V_3": 65.0,
-                  "V_4": 35.0,
-                  "V_5": 55.0,
-                  "V_6": 65.0})
+nest.SetDefaults("hh_cond_exp_traub", # Using Wang-Buzsaki
+                 {"phi_t": phi, # var
+				  "g_Na": 3500.,
+				  "g_K": 900.,
+				  "g_L": 10.,
+				  "E_Na": 55.,
+				  "E_K": -90.,
+				  "E_L": -65.,
+				  "E_ex": 0.,
+				  "E_in": -75., # var
+				  "tau_syn_ex": 10., # var
+				  "tau_syn_in": 10., # var
+				  "V_T": 0.,
+                  "V_1": 35.0, 
+                  "V_2": 60.0,
+                  "V_3": 58.0,
+                  "V_4": 28.0,
+                  "V_5": 34.0,
+                  "V_6": 44.0})
+# These values are already set as defaults in the models.
+# Only the variable ones need to be changed.
 
-#                  "E_L": 54.4, # Using Wang-Buzsaki Todo: adjust other E,g for WB too
-#                  "V_1": 35.0, # Using Wang-Buzsaki
-#                  "V_2": 60.0,
-#                  "V_3": 58.0,
-#                  "V_4": 28.0,
-#                  "V_5": 34.0,
-#                  "V_6": 44.0})
-
-nodes = nest.Create("hh_psc_alpha",N_neurons)
+nodes = nest.Create("hh_cond_exp_traub",N_neurons)
 nodes_E= nodes[:N_E]
 nodes_I= nodes[N_E:]
 
 # randomize membrane potential
-node_info   = nest.GetStatus(nodes, ['global_id','vp','local'])
-local_nodes = [(gid,vp) for gid,vp,islocal in node_info if islocal]
-for gid,vp in local_nodes: 
+node_E_info   = nest.GetStatus(nodes_E, ['global_id','vp','local'])
+local_nodes_E = [(gid,vp) for gid,vp,islocal in node_E_info if islocal]
+for gid,vp in local_nodes_E: 
   nest.SetStatus([gid], {'V_m': pyrngs[vp].uniform(V_init-V_range/2.,V_init+V_range/2.)})
 
-nest.CopyModel("static_synapse", "excitatory")
-for tgt_gid, tgt_vp in local_nodes:
-  eweights = pyrngs[tgt_vp].uniform(0.5*J_E, 1.5*J_E, C_E)
-  edelay = pyrngs[tgt_vp].uniform((1-d_range/2.)*delay, (1+d_range/2.)*delay, C_E)
-  nest.RandomConvergentConnect(nodes_E, [tgt_gid], C_E,
+node_I_info   = nest.GetStatus(nodes_I, ['global_id','vp','local'])
+local_nodes_I = [(gid,vp) for gid,vp,islocal in node_I_info if islocal]
+for gid,vp in local_nodes_I: 
+  nest.SetStatus([gid], {'V_m': pyrngs[vp].uniform(V_init-V_range/2.,V_init+V_range/2.)})
+
+# Generate connectivity matrix
+def flip(p):
+    return 1 if numpy.random.random() < p else 0
+
+conn_EE = []
+for r in range(0,N_E):
+ row = []
+ for e in range(0,N_E):
+  row.append(flip(p_conn_EE))
+ conn_EE.append(row)
+
+conn_EI = []
+for r in range(0,N_I):
+ row = []
+ for e in range(0,N_E):
+  row.append(flip(p_conn_EI))
+ conn_EI.append(row)
+
+conn_IE = [] # Inhib to Excit
+for r in range(0,N_E): # Each row contains synaptic connections to a neuron
+ row = []
+ for e in range(0,N_I):
+  row.append(flip(p_conn_IE))
+ conn_IE.append(row)
+
+conn_II = []
+for r in range(0,N_I):
+ row = []
+ for e in range(0,N_I):
+  row.append(flip(p_conn_II))
+ conn_II.append(row)
+
+# Count number of synapses per cell
+n_conn_EE = numpy.sum(conn_EE,1) # excit conns received by each excit neuron
+n_conn_EI = numpy.sum(conn_EI,1) # excit conns received by each inhib neuron
+n_conn_IE = numpy.sum(conn_IE,1)
+n_conn_II = numpy.sum(conn_II,1)
+
+print "Numbers of targets and mean/var of numbers of sources of EE, EI, IE, II connections:"
+print len(n_conn_EE), len(n_conn_EI), len(n_conn_IE), len(n_conn_II)
+print numpy.mean(n_conn_EE), numpy.mean(n_conn_EI), numpy.mean(n_conn_IE), numpy.mean(n_conn_II)
+print numpy.var(n_conn_EE), numpy.var(n_conn_EI), numpy.var(n_conn_IE), numpy.var(n_conn_II)
+
+# Make connections
+i = 0
+nest.CopyModel("static_synapse", "excitatory") # From Excitatory
+for tgt_gid, tgt_vp in local_nodes_E: # To Excitatory
+  eweights = pyrngs[tgt_vp].uniform(0.5*J_E, 1.5*J_E, n_conn_EE[i])
+  edelay = pyrngs[tgt_vp].uniform((1-d_range/2.)*delay, (1+d_range/2.)*delay, n_conn_EE[i])
+  nest.RandomConvergentConnect(nodes_E, [tgt_gid], n_conn_EE[i],
                                weight = list(eweights), delay = list(edelay),
                                model="excitatory")
+  i = i+1
 
-nest.CopyModel("static_synapse", "inhibitory")
-for tgt_gid, tgt_vp in local_nodes:
-  iweights = pyrngs[tgt_vp].uniform(0.5*J_I, 1.5*J_I, C_I)
-  idelay = pyrngs[tgt_vp].uniform((1-d_range/2.)*delay, (1+d_range/2.)*delay, C_I)
-  nest.RandomConvergentConnect(nodes_I, [tgt_gid], C_I,
+i = 0
+for tgt_gid, tgt_vp in local_nodes_I: # To Inhibitory
+  eweights = pyrngs[tgt_vp].uniform(0.5*J_E, 1.5*J_E, n_conn_EI[i])
+  edelay = pyrngs[tgt_vp].uniform((1-d_range/2.)*delay, (1+d_range/2.)*delay, n_conn_EI[i])
+  nest.RandomConvergentConnect(nodes_E, [tgt_gid], n_conn_EI[i],
+                               weight = list(eweights), delay = list(edelay),
+                               model="excitatory")
+  i = i+1
+
+i = 0
+nest.CopyModel("static_synapse", "inhibitory") # From Inhibitory
+for tgt_gid, tgt_vp in local_nodes_E: # To Excitatory
+  iweights = pyrngs[tgt_vp].uniform(0.5*J_I, 1.5*J_I, n_conn_IE[i])
+  idelay = pyrngs[tgt_vp].uniform((1-d_range/2.)*delay, (1+d_range/2.)*delay, n_conn_IE[i])
+  nest.RandomConvergentConnect(nodes_I, [tgt_gid], n_conn_IE[i],
                                weight = list(iweights), delay = list(idelay),
                                model="inhibitory")
+  i = i+1
 
-#nest.CopyModel("static_synapse", "excitatory")
-#for tgt_gid, tgt_vp in local_nodes:
-#  eweights = numpy.absolute(pyrngs[tgt_vp].normal(J_E, numpy.sqrt(0.5*J_E), C_E))
-#  nest.RandomConvergentConnect(nodes_E, [tgt_gid], C_E,
-#                               weight = list(eweights), delay = delay,
-#                               model="excitatory")
-#
-#nest.CopyModel("static_synapse", "inhibitory")
-#for tgt_gid, tgt_vp in local_nodes:
-#  iweights = -numpy.absolute(pyrngs[tgt_vp].normal(-J_I, numpy.sqrt(-0.5*J_I), C_I))
-#  nest.RandomConvergentConnect(nodes_I, [tgt_gid], C_I,
-#                               weight = list(iweights), delay = delay,
-#                               model="inhibitory")
+i = 0
+for tgt_gid, tgt_vp in local_nodes_I: # To Inhibitory
+  iweights = pyrngs[tgt_vp].uniform(0.5*J_I, 1.5*J_I, n_conn_II[i])
+  idelay = pyrngs[tgt_vp].uniform((1-d_range/2.)*delay, (1+d_range/2.)*delay, n_conn_II[i])
+  nest.RandomConvergentConnect(nodes_I, [tgt_gid], n_conn_II[i],
+                               weight = list(iweights), delay = list(idelay),
+                               model="inhibitory")
+  i = i+1
 
-noise=nest.Create("poisson_generator",1,{"rate": p_rate})
+noise=nest.Create("poisson_generator",1,{"rate": p_rate*N_neurons})
 
 nest.CopyModel("static_synapse_hom_wd",
                "excitatory-input",
@@ -134,9 +202,9 @@ nest.DivergentConnect(noise,nodes,model="excitatory-input")
 
 spikes=nest.Create("spike_detector",2, 
                    [{"label": "brunel-py-ex", "withtime": True,
-					"withgid": True, "to_file": True, "start":2700.},
+					"withgid": True, "to_file": True, "start":1000.},
                     {"label": "brunel-py-in", "withtime": True,
-					"withgid": True, "to_file": True, "start":2700.}])
+					"withgid": True, "to_file": True, "start":1000.}])
                    
 spikes_E=spikes[:1]
 spikes_I=spikes[1:]
@@ -147,8 +215,8 @@ nest.ConvergentConnect(nodes_I[:N_rec],spikes_I)
 
 voltmeter_E = nest.Create("voltmeter")
 voltmeter_I = nest.Create("voltmeter")
-nest.SetStatus(voltmeter_E,[{"to_file": True, "withtime": True, "withgid": True, "start":2700.}])
-nest.SetStatus(voltmeter_I,[{"to_file": True, "withtime": True, "withgid": True, "start":2700.}])
+nest.SetStatus(voltmeter_E,[{"to_file": True, "withtime": True, "withgid": True, "start":1000.}])
+nest.SetStatus(voltmeter_I,[{"to_file": True, "withtime": True, "withgid": True, "start":1000.}])
 nest.Connect(voltmeter_E, nodes_E[1:2])
 nest.Connect(voltmeter_I, nodes_I[1:2])
 
@@ -181,7 +249,7 @@ if nest.NumProcesses() == 1:
 else:
   print "Multiple MPI processes, skipping graphical output"
 
-simtime   = 3000.  # how long shall we simulate [ms]
+simtime   = 1300.  # how long shall we simulate [ms]
 nest.Simulate(simtime)
 
 pylab.figure()

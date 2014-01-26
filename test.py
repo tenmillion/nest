@@ -10,7 +10,7 @@ nest.SetKernelStatus({"overwrite_files": True})
 V_init	= -65.
 phi = float(sys.argv[1])
 
-nest.SetDefaults("hh_psc_alpha", 
+nest.SetDefaults("hh_cond_exp_traub", 
                  {"E_L": V_init,
 				  "C_m": 100.0,
 				  "phi_t": phi, # More: less tau
@@ -21,7 +21,7 @@ nest.SetDefaults("hh_psc_alpha",
                   "V_5": 34.0,
                   "V_6": 44.0})
 
-neuron = nest.Create("hh_psc_alpha")
+neuron = nest.Create("hh_cond_exp_traub")
 noise = nest.Create("poisson_generator", 2)
 
 voltmeter = nest.Create("voltmeter")
