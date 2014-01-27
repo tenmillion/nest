@@ -5,11 +5,15 @@
 import pylab
 import numpy
 from numpy import ndarray
-from datetime import datetime
 import sys
-import os
 
-spiketrain = numpy.loadtxt("sample.txt")  
+test = numpy.zeros((2,1000))
+for n in range(1000):
+ test[:,n] = [numpy.int(numpy.mod(n,50)+1),numpy.int(1000+numpy.floor(n/50))]
+print test
+numpy.savetxt("./test.txt",numpy.transpose(test))
+
+spiketrain = numpy.loadtxt("./test.txt")  
 print spiketrain.shape, "size of spiketrain"
 
 delta_t = 1
@@ -45,7 +49,7 @@ for cell in range(cells):
 
 # Create coincidence matrix
 coinc = numpy.zeros((N_record,N_record))
-numpy.fill_diagonal(coinc,1) # Count each 
+numpy.fill_diagonal(coinc,tally) # Manually setting diagonal because somehow the algorithm below doesn't work
 for b in range(numbins):
  mask1 = numpy.array(numpy.where(starttime+delta_t*(b) <= spiketrain[:,1]))
  mask2 = numpy.array(numpy.where(spiketrain[:,1] < starttime+delta_t*(b+1)))
@@ -56,13 +60,13 @@ for b in range(numbins):
   # Find all entries within a bin
   for e1 in range(es.shape[1]):
    for e2 in es[e1:]:
-    if (numpy.floor(es[e1,0]) <> numpy.floor(e2[0])) or (es[e1,1] <> e2[1]): # If the cell IDs or exact spike times are different
-     #print "C", es[e1,0], e2[0], "e1, e2", "bin", b
+    if (numpy.floor(es[e1,0]) <> numpy.floor(e2[0])): # If the cell IDs are different
      coinc[es[e1,0]-1,e2[0]-1]+=1 # index within es starts from 1 
+     print "C", es[e1,0], e2[0], "e1, e2", "bin", b+1
     else:
-     print es[e1,0], e2[0], es[e1,1], e2[1], "bin", b
- else:
-  print "no spikes in bin", b+1, "(", starttime+delta_t*(b), "to", starttime+delta_t*(b+1), ")"
+     print es[e1,0], e2[0], es[e1,1], e2[1], "bin", b+1
+ #else:
+ # print "no spikes in bin", b+1, "(", starttime+delta_t*(b), "to", starttime+delta_t*(b+1), ")"
 
 print "total # spikes:", numpy.sum(tally)
 print "total # coincs:", numpy.sum(coinc)
@@ -75,5 +79,21 @@ pylab.colorbar()
 pylab.show()
 
 # Show scatter plot
-#pylab.scatter(spiketrain[:,1],spiketrain[:,0])
-#pylab.show()
+pylab.scatter(spiketrain[:,1],spiketrain[:,0])
+pylab.show()
+
+# Compute coherence matrix
+coher = numpy.zeros((N_record,N_record))
+for i in range(N_record):
+ for j in range(N_record):
+  coher[i,j] = coinc[i,j] / numpy.sqrt(tally[i]*tally[j])
+  #if i == j:
+   #print i, j, coinc[i,j], tally[i], tally[j]
+print numpy.diagonal(coher)
+pylab.pcolor(coher)
+pylab.colorbar()
+pylab.show()
+
+# Compute coherence measure
+kappa = numpy.sum(coher)/float(N_record**2)
+print kappa
