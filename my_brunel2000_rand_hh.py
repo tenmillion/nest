@@ -106,7 +106,7 @@ nest.SetDefaults("hh_cond_exp_traub", # Using Wang-Buzsaki
 				  "E_in": -75., # var
 				  "tau_syn_ex": 10., # var
 				  "tau_syn_in": 10., # var
-				  "V_T": 0.,
+				  "V_T": -20.,
                   "V_1": 35.0, 
                   "V_2": 60.0,
                   "V_3": 58.0,
@@ -310,8 +310,8 @@ if nest.NumProcesses() == 1:
   pylab.title('Distribution of synaptic delay (%d synapses)' % len(d))
   pylab.savefig('./figures/'+fnprefix+'d_dist.eps')
 
-  pylab.figure()
   if Is_ext > 0:
+   pylab.figure()
    if N_E > 0:
     pylab.hist(eI_elist,bins=N_E/3)
     pylab.xlabel("Input current in pA")
@@ -335,9 +335,12 @@ if N_E>0:
  print "Excitatory rate   : %.2f Hz" % rate_ex
  filename_E = nest.GetStatus(spikes_E,"filenames")
  os.rename(filename_E[0][0], filename_E[0][0][:-3]+"txt")
- print filename_E[0][0][:-3]
- spiketrain = numpy.loadtxt(filename_E[0][0][:-3]+"txt")  
- print spiketrain.shape, "size of spiketrain_E"
+ #print filename_E[0][0][:-3]
+ #for filename in os.listdir("./output"):
+ # if filename == filename_E[0][0][:-3]+"txt":
+ #  print filename
+ #spiketrain_E = numpy.loadtxt(filename_E[0][0][:-3]+"txt")  
+ #print spiketrain_E.shape, "size of spiketrain_E"
 
 if N_I>0:
  events_I = nest.GetStatus(spikes_I,"n_events")
@@ -348,11 +351,12 @@ if N_I>0:
  filename_I = nest.GetStatus(spikes_I,"filenames")
  print filename_I[0][0], "before"
  os.rename(filename_I[0][0], filename_I[0][0][:-3]+"txt")
- print filename_I[0][0][:-3]
+ #print filename_I[0][0][:-3]
  #for filename in os.listdir("./output"):
  # if filename == filename_I[0][0][:-3]+"txt":
  #  print filename
- spiketrain = numpy.loadtxt(filename_I[0][0][:-3]+"txt")  
+ #spiketrain_I = numpy.loadtxt(filename_I[0][0][:-3]+"txt")  
+ #print spiketrain_I.shape, "size of spiketrain_I"
 
 # Plot Results
 if plotresults:
