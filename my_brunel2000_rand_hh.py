@@ -311,13 +311,14 @@ if nest.NumProcesses() == 1:
   pylab.savefig('./figures/'+fnprefix+'d_dist.eps')
 
   pylab.figure()
-  if N_E > 0:
-   pylab.hist(eI_elist,bins=N_E/3)
-   pylab.xlabel("Input current in pA")
-  if N_I > 0:
-   pylab.hist(iI_elist,bins=N_I/3)
-   pylab.xlabel("Input current in pA")
-  pylab.show()
+  if Is_ext > 0:
+   if N_E > 0:
+    pylab.hist(eI_elist,bins=N_E/3)
+    pylab.xlabel("Input current in pA")
+   if N_I > 0:
+    pylab.hist(iI_elist,bins=N_I/3)
+    pylab.xlabel("Input current in pA")
+   pylab.show()
 
 else:
   print "Multiple MPI processes, skipping graphical output"
