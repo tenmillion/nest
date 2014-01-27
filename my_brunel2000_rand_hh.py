@@ -77,9 +77,9 @@ nest.SetKernelStatus({"print_time": True,
                       "local_num_threads": 1})
 tdatetime = datetime.now()
 tstr = tdatetime.strftime('_%m%d-%H%M-%S_')
-fnprefix = str('phi%.1f'%phi)+str('g%.1f'%g)+str('in%.1f'%I_ext)+\
-		   str('J%.0f'%J_E)+str('+-%.1f'%J_range)+\
-		   str('E%d'%N_E)+str('I%d'%N_I)+str('MsynII%d'%M_syn_II)+tstr
+fnprefix = str('phi%.1f'%phi)+str('g%.1f'%g)+str('in%.1fpA'%I_ext)+\
+		   str('_J%.0f'%J_E)+str('+-%.1f_'%J_range)+\
+		   str('E%d'%N_E)+str('I%d'%N_I)+str('_MsynII%d'%M_syn_II)+tstr
 nest.SetKernelStatus({"data_path": "output", "data_prefix": fnprefix})
 
 # Create and seed RNGs
