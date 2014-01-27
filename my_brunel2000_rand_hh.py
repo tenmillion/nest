@@ -19,19 +19,32 @@
 # You should have received a copy of the GNU General Public License
 # along with NEST.  If not, see <http://www.gnu.org/licenses/>.
 
+#import NeuroTools.signals # Needs to load before nest, or python core dumps. Not sure why.
+#import NeuroTools.io # Needs latest version of NeuroTools downloaded thru svn
 import nest
 import nest.raster_plot
 import nest.voltage_trace
 import pylab
 import numpy
+from numpy import ndarray
 from datetime import datetime
 import sys
+import os
 
 # Network parameters. Some of these are given in Brunel (2000) J.Comp.Neuro.
 phi	   = float(sys.argv[1])    # Default 1.
 g      = float(sys.argv[2])    # Ratio of IPSP to EPSP amplitude: J_I/J_E
-I_ext  = float(sys.argv[3])    # Applied current in pA (default 1 uA/cm^2 = 100 pA)
-I_ext_s = 0.				   # SD of applied current in pA
+I_ext  = float(sys.argv[3])*100.  # Applied current in pA (default 1 uA/cm^2 = 100 pA)
+I_ext_s = float(sys.argv[4])*100.  # SD of I_ext in pA (scaled by 100 from original uA/cm^2)
+J_E  = float(sys.argv[5]) # Should be 0.1 mS/cm^2. Weight has units in pS in NEST? So... 
+
+N_E = 0
+N_I = 100
+
+M_syn_EE = 60. # Average number of ex-ex syns
+M_syn_EI = 30.
+M_syn_IE = 30.
+M_syn_II = 30.
 
 plotdistribs = False
 
@@ -39,14 +52,8 @@ delay   = 1.5   # synaptic delay in ms
 V_init	= -60.	# Initial membrane potential
 V_range = 20.	# Range of initial membrane potential
 d_range = 0.	# Range of synaptic delay (0 to 1)
-N_E = 100
-N_I = 0
-N_neurons = N_E+N_I
 
-M_syn_EE = 60. # Average number of ex-ex syns
-M_syn_EI = 0.
-M_syn_IE = 0.
-M_syn_II = 0.
+N_neurons = N_E+N_I
 
 if N_E > 0:
  p_conn_EE = M_syn_EE/float(N_E) # Probability of a synapse existing between ex-ex
@@ -61,7 +68,6 @@ else:
  p_conn_IE = 0.
  p_conn_II = 0.
 
-J_E  = 1. # Should be 0.1 mS/cm^2. Not sure what this corresponds to in NEST.
 J_I  = -g*J_E
 
 # Set parameters of the NEST simulation kernel
@@ -69,7 +75,8 @@ nest.SetKernelStatus({"print_time": True,
                       "local_num_threads": 1})
 tdatetime = datetime.now()
 tstr = tdatetime.strftime('_%m%d-%H%M-%S_')
-fnprefix = "phi"+str('%.1f'%phi)+"g"+str('%.1f'%g)+"in"+str('%.0f'%I_ext)+tstr
+fnprefix = str('phi%.1f'%phi)+str('g%.1f'%g)+str('in%.0f'%I_ext)+\
+			str('E%d'%N_E)+str('I%d'%N_I)+tstr
 nest.SetKernelStatus({"data_path": "output", "data_prefix": fnprefix})
 
 # Create and seed RNGs
@@ -111,15 +118,17 @@ nodes_E= nodes[:N_E]
 nodes_I= nodes[N_E:]
 
 # randomize membrane potential
-node_E_info   = nest.GetStatus(nodes_E, ['global_id','vp','local'])
-local_nodes_E = [(gid,vp) for gid,vp,islocal in node_E_info if islocal]
-for gid,vp in local_nodes_E: 
-  nest.SetStatus([gid], {'V_m': pyrngs[vp].uniform(V_init-V_range/2.,V_init+V_range/2.)})
+if N_E > 0:
+ node_E_info   = nest.GetStatus(nodes_E, ['global_id','vp','local'])
+ local_nodes_E = [(gid,vp) for gid,vp,islocal in node_E_info if islocal]
+ for gid,vp in local_nodes_E: 
+   nest.SetStatus([gid], {'V_m': pyrngs[vp].uniform(V_init-V_range/2.,V_init+V_range/2.)})
 
-node_I_info   = nest.GetStatus(nodes_I, ['global_id','vp','local'])
-local_nodes_I = [(gid,vp) for gid,vp,islocal in node_I_info if islocal]
-for gid,vp in local_nodes_I: 
-  nest.SetStatus([gid], {'V_m': pyrngs[vp].uniform(V_init-V_range/2.,V_init+V_range/2.)})
+if N_I > 0:
+ node_I_info   = nest.GetStatus(nodes_I, ['global_id','vp','local'])
+ local_nodes_I = [(gid,vp) for gid,vp,islocal in node_I_info if islocal]
+ for gid,vp in local_nodes_I: 
+   nest.SetStatus([gid], {'V_m': pyrngs[vp].uniform(V_init-V_range/2.,V_init+V_range/2.)})
 
 # Generate connectivity matrix
 def flip(p):
@@ -228,6 +237,18 @@ if N_I > 0:
                                 model="inhibitory")
    i = i+1
 
+# Modify inputs
+if I_ext_s > 0:
+ if N_E > 0:
+  eI_elist = numpy.random.normal(I_ext, I_ext_s, N_E)
+  for k in range(N_E):
+   nest.SetStatus([nodes_E[k]], {"I_e": eI_elist[k]})
+
+ if N_I > 0:
+  iI_elist = numpy.random.normal(I_ext, I_ext_s, N_I)
+  for k in range(N_I):
+   nest.SetStatus([nodes_I[k]], {"I_e": iI_elist[k]})
+
 # Make input connections
 #noise=nest.Create("poisson_generator",1,{"rate": p_rate*N_neurons})
 
@@ -266,7 +287,7 @@ if nest.NumProcesses() == 1:
   V_I = nest.GetStatus(nodes_I[:N_rec], 'V_m')
   pylab.hist(V_I, bins=10)
   pylab.xlabel('Membrane potential V_m [mV]')
-  pylab.savefig('./figures/'+fnprefix+'rand_Vm.eps')
+  pylab.savefig('./figures/'+fnprefix+'Vm_dist.eps')
 
   pylab.figure()
   w = nest.GetStatus(nest.GetConnections(nodes_I[:N_rec],
@@ -275,7 +296,7 @@ if nest.NumProcesses() == 1:
   pylab.hist(w, bins=100)
   pylab.xlabel('Synaptic weight [pA]')
   pylab.title('Distribution of synaptic weights (%d synapses)' % len(w))
-  pylab.savefig('./figures/'+fnprefix+'rand_w.eps')
+  pylab.savefig('./figures/'+fnprefix+'w_dist.eps')
 
   pylab.figure()
   d = nest.GetStatus(nest.GetConnections(nodes_I[:N_rec],
@@ -284,19 +305,20 @@ if nest.NumProcesses() == 1:
   pylab.hist(d, bins=100)
   pylab.xlabel('Synaptic delay [ms]')
   pylab.title('Distribution of synaptic delay (%d synapses)' % len(d))
-  pylab.savefig('./figures/'+fnprefix+'rand_d.eps')
+  pylab.savefig('./figures/'+fnprefix+'d_dist.eps')
+
+  pylab.figure()
+  pylab.hist(eI_elist,bins=N_E/3)
+  pylab.xlabel("Input current in pA")
+  pylab.hist(iI_elist,bins=N_I/3)
+  pylab.xlabel("Input current in pA")
+  pylab.show()
+
 else:
   print "Multiple MPI processes, skipping graphical output"
 
 simtime   = 1300.  # how long shall we simulate [ms]
 nest.Simulate(simtime)
-
-pylab.figure()
-if N_E>0:
- nest.voltage_trace.from_device(voltmeter_E)
-if N_I>0:
- nest.voltage_trace.from_device(voltmeter_I)
-nest.voltage_trace.show()
 
 # Before we compute the rates, we need to know how many of the recorded
 # neurons are on the local MPI process
@@ -305,6 +327,11 @@ if N_E>0:
  N_rec_local_E = sum(nest.GetStatus(nodes_E[:N_rec], 'local'))
  rate_ex= events_E[0]/simtime*1000.0/N_rec_local_E
  print "Excitatory rate   : %.2f Hz" % rate_ex
+ filename_E = nest.GetStatus(spikes_E,"filenames")
+ os.rename(filename_E[0][0], filename_E[0][0][:-3]+"txt")
+ print filename_E[0][0][:-3]
+ spiketrain_E = numpy.loadtxt(filename_E[0][0][:-3]+"txt")  
+ print spiketrain_E.shape, "size of spiketrain_E"
 
 if N_I>0:
  events_I = nest.GetStatus(spikes_I,"n_events")
@@ -312,14 +339,32 @@ if N_I>0:
  N_rec_local_I = sum(nest.GetStatus(nodes_I[:N_rec], 'local'))
  rate_in= events_I[0]/simtime*1000.0/N_rec_local_I
  print "Inhibitory rate   : %.2f Hz" % rate_in
+ filename_I = nest.GetStatus(spikes_I,"filenames")
+ print filename_I[0][0], "before"
+ os.rename(filename_I[0][0], filename_I[0][0][:-3]+"txt")
+ print filename_I[0][0][:-3]
+ #for filename in os.listdir("./output"):
+ # if filename == filename_I[0][0][:-3]+"txt":
+ #  print filename
+ spiketrain_I = numpy.loadtxt(filename_I[0][0][:-3]+"txt")  
+ print spiketrain_I.shape, "size of spiketrain_I"
+
+# Plot Results
+pylab.figure()
+if N_E>0:
+ nest.voltage_trace.from_device(voltmeter_E)
+if N_I>0:
+ nest.voltage_trace.from_device(voltmeter_I)
+pylab.savefig('./figures/'+fnprefix+'Vm_trace.eps')
+nest.voltage_trace.show()
 
 if nest.NumProcesses() == 1:
   if N_E>0:
    nest.raster_plot.from_device(spikes_E, hist=True, title='Excitatory')
-   pylab.savefig('./figures/'+fnprefix+'rand_raster.eps')
+   pylab.savefig('./figures/'+fnprefix+'raster.eps')
   if N_I>0:  
    nest.raster_plot.from_device(spikes_I, hist=True, title='Inhibitory')
-   pylab.savefig('./figures/'+fnprefix+'rand_raster.eps')
+   pylab.savefig('./figures/'+fnprefix+'raster.eps')
 else:
   print "Multiple MPI processes, skipping graphical output"
 
