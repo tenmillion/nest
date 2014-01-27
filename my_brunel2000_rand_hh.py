@@ -35,8 +35,9 @@ import os
 phi	   = float(sys.argv[1])    # Default 1.
 g      = float(sys.argv[2])    # Ratio of IPSP to EPSP amplitude: J_I/J_E
 I_ext  = float(sys.argv[3])*100.  # Applied current in pA (default 1 uA/cm^2 = 100 pA)
-I_ext_s = float(sys.argv[4])*100.  # SD of I_ext in pA (scaled by 100 from original uA/cm^2)
-J_E  = float(sys.argv[5]) # Should be 0.1 mS/cm^2. Weight has units in pS in NEST? So... 
+Is_ext = float(sys.argv[4])*100.  # SD of I_ext in pA (scaled by 100 from original uA/cm^2)
+J_E    = float(sys.argv[5]) # Should be 0.1 mS/cm^2. Weight has units in pS in NEST? So... 
+J_range = 0.	# Range of synaptic weight (0 to 1)
 
 N_E = 0
 N_I = 100
@@ -48,9 +49,9 @@ M_syn_II = 30.
 
 plotdistribs = False
 
-delay   = 1.5   # synaptic delay in ms
 V_init	= -60.	# Initial membrane potential
 V_range = 20.	# Range of initial membrane potential
+delay   = 1.5   # synaptic delay in ms
 d_range = 0.	# Range of synaptic delay (0 to 1)
 
 N_neurons = N_E+N_I
@@ -75,8 +76,9 @@ nest.SetKernelStatus({"print_time": True,
                       "local_num_threads": 1})
 tdatetime = datetime.now()
 tstr = tdatetime.strftime('_%m%d-%H%M-%S_')
-fnprefix = str('phi%.1f'%phi)+str('g%.1f'%g)+str('in%.0f'%I_ext)+\
-			str('E%d'%N_E)+str('I%d'%N_I)+tstr
+fnprefix = str('phi%.1f'%phi)+str('g%.1f'%g)+str('in%.1f'%I_ext)+\
+		   str('J%.0f'%J_E)+str('+-%.1f'%J_range)+\
+		   str('E%d'%N_E)+str('I%d'%N_I)+str('MsynII%d'%M_syn_II)+tstr
 nest.SetKernelStatus({"data_path": "output", "data_prefix": fnprefix})
 
 # Create and seed RNGs
@@ -198,7 +200,7 @@ i = 0
 if N_E > 0:
  nest.CopyModel("static_synapse", "excitatory") # From Excitatory
  for tgt_gid, tgt_vp in local_nodes_E: # To Excitatory
-   eweights = pyrngs[tgt_vp].uniform(0.5*J_E, 1.5*J_E, n_conn_EE[i])
+   eweights = pyrngs[tgt_vp].uniform((1-J_range/2.)*J_E, (1+J_range/2.)*J_E, n_conn_EE[i])
    edelay = pyrngs[tgt_vp].uniform((1-d_range/2.)*delay, (1+d_range/2.)*delay, n_conn_EE[i])
    nest.RandomConvergentConnect(nodes_E, [tgt_gid], n_conn_EE[i],
                                 weight = list(eweights), delay = list(edelay),
@@ -208,7 +210,7 @@ if N_E > 0:
 if N_E >0 and N_I >0:
  i = 0
  for tgt_gid, tgt_vp in local_nodes_I: # To Inhibitory
-   eweights = pyrngs[tgt_vp].uniform(0.5*J_E, 1.5*J_E, n_conn_EI[i])
+   eweights = pyrngs[tgt_vp].uniform((1-J_range/2.)*J_E, (1+J_range/2.)5*J_E, n_conn_EI[i])
    edelay = pyrngs[tgt_vp].uniform((1-d_range/2.)*delay, (1+d_range/2.)*delay, n_conn_EI[i])
    nest.RandomConvergentConnect(nodes_E, [tgt_gid], n_conn_EI[i],
                                 weight = list(eweights), delay = list(edelay),
@@ -218,7 +220,7 @@ if N_E >0 and N_I >0:
  i = 0
  nest.CopyModel("static_synapse", "inhibitory") # From Inhibitory
  for tgt_gid, tgt_vp in local_nodes_E: # To Excitatory
-   iweights = pyrngs[tgt_vp].uniform(0.5*J_I, 1.5*J_I, n_conn_IE[i])
+   iweights = pyrngs[tgt_vp].uniform((1-J_range/2.)*J_I, (1+J_range/2.)*J_I, n_conn_IE[i])
    idelay = pyrngs[tgt_vp].uniform((1-d_range/2.)*delay, (1+d_range/2.)*delay, n_conn_IE[i])
    nest.RandomConvergentConnect(nodes_I, [tgt_gid], n_conn_IE[i],
                                 weight = list(iweights), delay = list(idelay),
@@ -230,7 +232,7 @@ else:
 if N_I > 0:
  i = 0
  for tgt_gid, tgt_vp in local_nodes_I: # To Inhibitory
-   iweights = pyrngs[tgt_vp].uniform(0.5*J_I, 1.5*J_I, n_conn_II[i])
+   iweights = pyrngs[tgt_vp].uniform((1-J_range/2.)*J_I, (1+J_range/2.)*J_I, n_conn_II[i])
    idelay = pyrngs[tgt_vp].uniform((1-d_range/2.)*delay, (1+d_range/2.)*delay, n_conn_II[i])
    nest.RandomConvergentConnect(nodes_I, [tgt_gid], n_conn_II[i],
                                 weight = list(iweights), delay = list(idelay),
@@ -238,14 +240,14 @@ if N_I > 0:
    i = i+1
 
 # Modify inputs
-if I_ext_s > 0:
+if Is_ext > 0:
  if N_E > 0:
-  eI_elist = numpy.random.normal(I_ext, I_ext_s, N_E)
+  eI_elist = numpy.random.normal(I_ext, Is_ext, N_E)
   for k in range(N_E):
    nest.SetStatus([nodes_E[k]], {"I_e": eI_elist[k]})
 
  if N_I > 0:
-  iI_elist = numpy.random.normal(I_ext, I_ext_s, N_I)
+  iI_elist = numpy.random.normal(I_ext, Is_ext, N_I)
   for k in range(N_I):
    nest.SetStatus([nodes_I[k]], {"I_e": iI_elist[k]})
 
@@ -348,106 +350,6 @@ if N_I>0:
  #  print filename
  spiketrain = numpy.loadtxt(filename_I[0][0][:-3]+"txt")  
 
-####Coherence measure####
-print spiketrain.shape, "size of spiketrain"
-
-delta_t = 10
-recordtime = 300.
-N_record = 50
-starttime = 1000.
-
-numbins = numpy.int(numpy.floor(recordtime / delta_t))
-print numpy.max(spiketrain[:,0]), "max cell #" # 0th col
-print numpy.max(spiketrain[:,1]), "max time" # 1st col
-cells = numpy.int(numpy.max(spiketrain[:,0]))
-print cells, "number of cells to count from"
-
-# Create binned spike vector
-tally = numpy.zeros(N_record)
-for cell in range(cells):
- es = spiketrain[numpy.where(spiketrain[:,0] == cell+1),:] # Find entries where cell num eq cell
-# print es, "es"
-# print es.shape, "es.shape"
- for e in range(es.shape[1]-1): #Assuming es is sorted in time,
-   if numpy.floor(es[0,e,1] / delta_t) <> numpy.floor(es[0,e+1,1] / delta_t):
-    tally[cell]+=1
-   else:
-    print es[0,e,1], es[0,e,1], "cell", cell+1
- tally[cell] += 1
-
-#a = numpy.array([])
-#for cell in range(cells):
-#  a=numpy.append(a,numpy.size(numpy.where(spiketrain[:,0] == cell+1)))
-#print "for comparison, pure spike counts without the binning\n", a
-#print tally < a
-#print tally - a
-
-# Create coincidence matrix
-coinc = numpy.zeros((N_record,N_record))
-numpy.fill_diagonal(coinc,tally) # Manually setting diagonal because somehow the algorithm below doesn't work
-for b in range(numbins):
- mask1 = numpy.array(numpy.where(starttime+delta_t*(b) <= spiketrain[:,1]))
- mask2 = numpy.array(numpy.where(spiketrain[:,1] < starttime+delta_t*(b+1)))
- mask = numpy.intersect1d(mask1.flatten(),mask2.flatten())
- if mask.any(): # If overlap is nonempty, i.e. there were spikes in that bin
-  es = spiketrain[mask,:]
-  #print mask.shape[0],"spikes in bin", b+1, "(", starttime+delta_t*(b), "to", starttime+delta_t*(b+1), ")"
-  # Find all entries within a bin
-  for e1 in range(es.shape[1]):
-   for e2 in es[e1:]:
-    if (numpy.floor(es[e1,0]) <> numpy.floor(e2[0])): # If the cell IDs are different
-     coinc[es[e1,0]-1,e2[0]-1]+=1 # index within es starts from 1 
-     #print "C", es[e1,0], e2[0], "e1, e2", "bin", b+1
-    #else:
-     #print es[e1,0], e2[0], es[e1,1], e2[1], "bin", b+1
- #else:
- # print "no spikes in bin", b+1, "(", starttime+delta_t*(b), "to", starttime+delta_t*(b+1), ")"
-
-print "total # spikes:", numpy.sum(tally)
-print "total # coincs:", numpy.sum(coinc)
-print numpy.mean(coinc)
-print numpy.diagonal(coinc)
-
-# Show coincidence matrix
-pylab.pcolor(coinc)
-pylab.colorbar()
-pylab.show()
-
-# Show scatter plot
-#pylab.scatter(spiketrain[:,1],spiketrain[:,0])
-#pylab.show()
-
-# Compute coherence matrix
-coher = numpy.zeros((N_record,N_record))
-for i in range(N_record):
- for j in range(N_record):
-  if tally[i] > 0 and tally[j] > 0:
-   coher[i,j] = coinc[i,j] / numpy.sqrt(tally[i]*tally[j])
-   #if i == j:
-    #print i, j, coinc[i,j], tally[i], tally[j]
-print numpy.diagonal(coher)
-#pylab.pcolor(coher)
-#pylab.colorbar()
-#pylab.show()
-
-# Compute coherence measure
-kappa = numpy.mean(coher)
-print kappa
-####
-
-# Plot Results
-pylab.figure()
-if N_E>0:
- nest.voltage_trace.from_device(voltmeter_E)
-if N_I>0:
- nest.voltage_trace.from_device(voltmeter_I)
-pylab.savefig('./figures/'+fnprefix+'Vm_trace.eps')
-nest.voltage_trace.show()
-
-if nest.NumProcesses() == 1:
-  if N_E>0:
-   nest.raster_plot.from_device(spikes_E, hist=True, title='Excitatory')
-   pylab.savefig('./figures/'+fnprefix+'raster.eps')
   if N_I>0:  
    nest.raster_plot.from_device(spikes_I, hist=True, title='Inhibitory')
    pylab.savefig('./figures/'+fnprefix+'raster.eps')
