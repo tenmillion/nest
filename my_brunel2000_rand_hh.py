@@ -47,7 +47,8 @@ M_syn_EI = 30.
 M_syn_IE = 30.
 M_syn_II = 30.
 
-plotdistribs = False
+plotdistribs = True
+plotresults = True
 
 V_init	= -60.	# Initial membrane potential
 V_range = 20.	# Range of initial membrane potential
@@ -210,7 +211,7 @@ if N_E > 0:
 if N_E >0 and N_I >0:
  i = 0
  for tgt_gid, tgt_vp in local_nodes_I: # To Inhibitory
-   eweights = pyrngs[tgt_vp].uniform((1-J_range/2.)*J_E, (1+J_range/2.)5*J_E, n_conn_EI[i])
+   eweights = pyrngs[tgt_vp].uniform((1-J_range/2.)*J_E, (1+J_range/2.)*J_E, n_conn_EI[i])
    edelay = pyrngs[tgt_vp].uniform((1-d_range/2.)*delay, (1+d_range/2.)*delay, n_conn_EI[i])
    nest.RandomConvergentConnect(nodes_E, [tgt_gid], n_conn_EI[i],
                                 weight = list(eweights), delay = list(edelay),
@@ -350,10 +351,26 @@ if N_I>0:
  #  print filename
  spiketrain = numpy.loadtxt(filename_I[0][0][:-3]+"txt")  
 
-  if N_I>0:  
-   nest.raster_plot.from_device(spikes_I, hist=True, title='Inhibitory')
-   pylab.savefig('./figures/'+fnprefix+'raster.eps')
-else:
-  print "Multiple MPI processes, skipping graphical output"
+# Plot Results
+if plotresults:
+ pylab.figure()
+ if N_E>0:
+  nest.voltage_trace.from_device(voltmeter_E)
+ if N_I>0:
+  nest.voltage_trace.from_device(voltmeter_I)
+  pylab.savefig('./figures/'+fnprefix+'Vm_trace.eps')
+  nest.voltage_trace.show()
+ 
+ if nest.NumProcesses() == 1:
+   if N_E>0:
+    nest.raster_plot.from_device(spikes_E, hist=True, title='Excitatory')
+    pylab.savefig('./figures/'+fnprefix+'raster.eps')
+   if N_I>0:  
+    nest.raster_plot.from_device(spikes_I, hist=True, title='Inhibitory')
+    pylab.savefig('./figures/'+fnprefix+'raster.eps')
+ else:
+   print "Multiple MPI processes, skipping graphical output"
 
-pylab.show()
+ pylab.show()
+else:
+ print "Set plotresults to True to show plots here."
