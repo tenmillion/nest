@@ -36,7 +36,8 @@ phi	   = float(sys.argv[1])    # Default 1.
 g      = float(sys.argv[2])    # Ratio of IPSP to EPSP amplitude: J_I/J_E
 I_ext  = float(sys.argv[3])*100.  # Applied current in pA (default 1 uA/cm^2 = 100 pA)
 Is_ext = float(sys.argv[4])*100.  # SD of I_ext in pA (scaled by 100 from original uA/cm^2)
-J_E    = float(sys.argv[5]) # Should be 0.1 mS/cm^2. Weight has units in pS in NEST? So... 
+J_I    = float(sys.argv[5])*(-1.) # Should be 0.1 mS/cm^2. Weight has units in pS in NEST? Area?
+M_syn_II = float(sys.argv[6])     # Mean synaptic inputs between inh neurons (default N_I) 
 J_range = 0.	# Range of synaptic weight (0 to 1)
 
 N_E = 0
@@ -45,17 +46,20 @@ N_I = 100
 M_syn_EE = 60. # Average number of ex-ex syns
 M_syn_EI = 30.
 M_syn_IE = 30.
-M_syn_II = 30.
 
-plotdistribs = True
+plotdistribs = False
 plotresults = True
+sortIext = True
 
 V_init	= -60.	# Initial membrane potential
 V_range = 20.	# Range of initial membrane potential
 delay   = 1.5   # synaptic delay in ms
 d_range = 0.	# Range of synaptic delay (0 to 1)
+thres = -20.		# Threshold of spike detection?
 
 N_neurons = N_E+N_I
+starttime = 0.
+endtime = 1300.
 
 if N_E > 0:
  p_conn_EE = M_syn_EE/float(N_E) # Probability of a synapse existing between ex-ex
@@ -70,15 +74,15 @@ else:
  p_conn_IE = 0.
  p_conn_II = 0.
 
-J_I  = -g*J_E
+J_E  = J_I/(-g)
 
 # Set parameters of the NEST simulation kernel
 nest.SetKernelStatus({"print_time": True,
                       "local_num_threads": 1})
 tdatetime = datetime.now()
 tstr = tdatetime.strftime('_%m%d-%H%M-%S_')
-fnprefix = str('phi%.1f'%phi)+str('g%.1f'%g)+str('in%.1fpA'%I_ext)+\
-		   str('_J%.0f'%J_E)+str('+-%.1f_'%J_range)+\
+fnprefix = str('T%dmV'%thres)+str('phi%.1f'%phi)+str('g%.1f'%g)+str('in%.1fpA'%I_ext)+\
+		   str('_JI%.3f'%J_I)+str('+-%.1f_'%J_range)+\
 		   str('E%d'%N_E)+str('I%d'%N_I)+str('_MsynII%d'%M_syn_II)+tstr
 nest.SetKernelStatus({"data_path": "output", "data_prefix": fnprefix})
 
@@ -106,7 +110,7 @@ nest.SetDefaults("hh_cond_exp_traub", # Using Wang-Buzsaki
 				  "E_in": -75., # var
 				  "tau_syn_ex": 10., # var
 				  "tau_syn_in": 10., # var
-				  "V_T": -20.,
+				  "V_T": thres, # var
                   "V_1": 35.0, 
                   "V_2": 60.0,
                   "V_3": 58.0,
@@ -244,11 +248,15 @@ if N_I > 0:
 if Is_ext > 0:
  if N_E > 0:
   eI_elist = numpy.random.normal(I_ext, Is_ext, N_E)
+  if sortIext:
+   eI_elist = numpy.sort(eI_elist)
   for k in range(N_E):
    nest.SetStatus([nodes_E[k]], {"I_e": eI_elist[k]})
 
  if N_I > 0:
   iI_elist = numpy.random.normal(I_ext, Is_ext, N_I)
+  if sortIext:
+   iI_elist = numpy.sort(iI_elist)
   for k in range(N_I):
    nest.SetStatus([nodes_I[k]], {"I_e": iI_elist[k]})
 
@@ -266,20 +274,20 @@ N_rec = 50    # Number of neurons to record from
 if N_E > 0:
  spikes_E=nest.Create("spike_detector",1, 
                     [{"label": "brunel-py-ex", "withtime": True,
- 					"withgid": True, "to_file": True, "start":1000.}])                   
+ 					"withgid": True, "to_file": True, "start":starttime}])                   
  nest.ConvergentConnect(nodes_E[:N_rec],spikes_E)
  voltmeter_E = nest.Create("voltmeter")
- nest.SetStatus(voltmeter_E,[{"to_file": True, "withtime": True, "withgid": True, "start":1000.}])
+ nest.SetStatus(voltmeter_E,[{"to_file": True, "withtime": True, "withgid": True, "start":starttime}])
  nest.Connect(voltmeter_E, nodes_E[1:2])
 
 if N_I > 0:
  spikes_I=nest.Create("spike_detector",1, 
                     [{"label": "brunel-py-in", "withtime": True,
-	  	 			"withgid": True, "to_file": True, "start":1000.}])                   
+	  	 			"withgid": True, "to_file": True, "start":starttime}])                   
  nest.ConvergentConnect(nodes_I[:N_rec],spikes_I)
 
  voltmeter_I = nest.Create("voltmeter")
- nest.SetStatus(voltmeter_I,[{"to_file": True, "withtime": True, "withgid": True, "start":1000.}])
+ nest.SetStatus(voltmeter_I,[{"to_file": True, "withtime": True, "withgid": True, "start":starttime}])
  nest.Connect(voltmeter_I, nodes_I[1:2])
 
 # Visualization of initial membrane potential and initial weight
@@ -323,7 +331,7 @@ if nest.NumProcesses() == 1:
 else:
   print "Multiple MPI processes, skipping graphical output"
 
-simtime   = 1300.  # how long shall we simulate [ms]
+simtime   = endtime  # how long shall we simulate [ms]
 nest.Simulate(simtime)
 
 # Before we compute the rates, we need to know how many of the recorded
