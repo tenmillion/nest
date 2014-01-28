@@ -90,7 +90,7 @@ print '( dim1 =', dim1, ', dim2=', dim2, ')'
 print 'Reading file names...'
 flist = []
 tlist = []
-for distinctd1 in c.execute('SELECT DISTINCT '+dim1+' FROM subspace').fetchall():
+for distinctd1 in c.execute('SELECT DISTINCT '+dim1+' FROM subspace ORDER BY '+dim1+' ASC').fetchall():
 	ftemp = []
 	ttemp = []
 	for entry in c.execute('SELECT filename, '+dim1+', '+dim2+' FROM subspace WHERE '+dim1+'='+str(distinctd1[0])+' ORDER BY '+dim2+' DESC'):

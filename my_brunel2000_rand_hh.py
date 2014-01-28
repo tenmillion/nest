@@ -324,10 +324,12 @@ nest.Simulate(simtime)
 # neurons are on the local MPI process
 if N_E>0:
  events_E = nest.GetStatus(spikes_E,"n_events")
+ print events_E, "events_E"
  N_rec_local_E = sum(nest.GetStatus(nodes_E[:N_rec], 'local'))
  rate_ex= events_E[0]/simtime*1000.0/N_rec_local_E
  print "Excitatory rate   : %.2f Hz" % rate_ex
  filename_E = nest.GetStatus(spikes_E,"filenames")
+ print filename_E[0][0], "before"
  os.rename(filename_E[0][0], filename_E[0][0][:-3]+"txt")
 
 if N_I>0:
@@ -361,7 +363,7 @@ if plotresults:
    if N_I>0:
     #spiketrain_I = numpy.loadtxt(filename_I[0][0][:-3]+"txt")
     #pylab.title('Inhibitory')
-    nest.raster_plot.from_device(spikes_E, hist=True, title='Inhibitory')
+    nest.raster_plot.from_device(spikes_I, hist=True, title='Inhibitory')
     #NeuroTools.signals.raster_plot(spikes_I, kwargs={'color':'g','marker':'.'})
     pylab.savefig('./figures/'+sys.argv[9]+"/"+sys.argv[10]+"/"+fnprefix+'raster_I.eps')
  else:

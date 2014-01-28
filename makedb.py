@@ -39,19 +39,24 @@ for x in glob.glob('output/*/*/*.txt'):
 	type_x = re.search('brunel\-py\-(ex|in)',x).group(1)		#
 	trial_x = re.search('([0-9]+)\.txt',x).group(1)				#
 	entry = [(x, dir_x, thres_x, phi_x, g_x, iext_x, ji_x, jis_x, ne_x, ni_x, msyn_x, type_x, trial_x),]
-	print entry
+	#print entry
 	
 	# Check for existing entries with different file name but same params
 	c.execute('SELECT COUNT(*) FROM output WHERE dir=:dir AND thres=:thres AND phi=:phi AND g=:g AND iext=:iext AND ji=:ji AND\
 						jis=:jis AND ne=:ne AND ni=:ni AND msyn=:msyn AND type=:type AND trial=:trial',\
 						{"dir": dir_x, "thres":thres_x, "phi":phi_x, "g":g_x, "iext":iext_x, "ji":ji_x, "jis":jis_x, "ne":ne_x, "ni":ni_x, "msyn":msyn_x, "type":type_x, "trial":trial_x})
 	count=c.fetchone()[0]
+	c.execute('SELECT * FROM output WHERE dir=:dir AND thres=:thres AND phi=:phi AND g=:g AND iext=:iext AND ji=:ji AND\
+	jis=:jis AND ne=:ne AND ni=:ni AND msyn=:msyn AND type=:type AND trial=:trial',\
+	{"dir": dir_x, "thres":thres_x, "phi":phi_x, "g":g_x, "iext":iext_x, "ji":ji_x, "jis":jis_x, "ne":ne_x, "ni":ni_x, "msyn":msyn_x, "type":type_x, "trial":trial_x})
+	overlap=c.fetchall()
 	
 	if count==0:
 		c.executemany('INSERT INTO output VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?)', entry)
 		nadded += 1
 	else:
 		print "Overlapping parameters", x
+		print overlap, count
 		nskipped += count
 
 conn.commit()
