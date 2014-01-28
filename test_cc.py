@@ -22,7 +22,7 @@ if len(sys.argv) == 1: # test mode
  for n in range(cells):
   for s in range(ss):
    print n*cells+s
-   test[:,s*cells+n] = [n,times[s]]
+   test[:,s*cells+n] = [n,times[s]]git 
  numpy.savetxt("./test.txt",numpy.transpose(test))
  spiketrain = numpy.loadtxt("./test.txt")
 

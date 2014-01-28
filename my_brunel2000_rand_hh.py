@@ -2,22 +2,7 @@
 #
 # my_brunel2000_rand_hh.py
 #
-# This file is part of NEST.
-#
-# Copyright (C) 2004 The NEST Initiative
-#
-# NEST is free software: you can redistribute it and/or modify
-# it under the terms of the GNU General Public License as published by
-# the Free Software Foundation, either version 2 of the License, or
-# (at your option) any later version.
-#
-# NEST is distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of
-# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-# GNU General Public License for more details.
-#
-# You should have received a copy of the GNU General Public License
-# along with NEST.  If not, see <http://www.gnu.org/licenses/>.
+# Temperature-enabled Hodgkin-Huxley network, based on Wang-Buzsaki 1996 and Brunel 2000.
 
 #import NeuroTools.signals # Needs to load before nest, or python core dumps. Not sure why.
 #import NeuroTools.io # Needs latest version of NeuroTools downloaded thru svn
@@ -40,12 +25,12 @@ J_I    = float(sys.argv[5])*(-1.) # Should be 0.1 mS/cm^2. Weight has units in p
 M_syn_II = float(sys.argv[6])     # Mean synaptic inputs between inh neurons (default N_I) 
 J_range = 0.	# Range of synaptic weight (0 to 1)
 
-N_E = 0
-N_I = 100
+N_E = int(sys.argv[7])
+N_I = int(sys.argv[8])
 
-M_syn_EE = 60. # Average number of ex-ex syns
-M_syn_EI = 30.
-M_syn_IE = 30.
+M_syn_EE = M_syn_II*g # Average number of ex-ex syns, scales with pop ratio
+M_syn_EI = M_syn_EE
+M_syn_IE = M_syn_II
 
 plotdistribs = False
 plotresults = True
@@ -55,11 +40,12 @@ V_init	= -60.	# Initial membrane potential
 V_range = 20.	# Range of initial membrane potential
 delay   = 1.5   # synaptic delay in ms
 d_range = 0.	# Range of synaptic delay (0 to 1)
-thres = -20.		# Threshold of spike detection?
+thres = -20.	# Threshold of spike detection?
 
 N_neurons = N_E+N_I
 starttime = 0.
 endtime = 1300.
+N_rec = 50    # Number of neurons to record from
 
 if N_E > 0:
  p_conn_EE = M_syn_EE/float(N_E) # Probability of a synapse existing between ex-ex
@@ -84,7 +70,7 @@ tstr = tdatetime.strftime('_%m%d-%H%M-%S_')
 fnprefix = str('T%dmV'%thres)+str('phi%.1f'%phi)+str('g%.1f'%g)+str('in%.1fpA'%I_ext)+\
 		   str('_JI%.3f'%J_I)+str('+-%.1f_'%J_range)+\
 		   str('E%d'%N_E)+str('I%d'%N_I)+str('_MsynII%d'%M_syn_II)+tstr
-nest.SetKernelStatus({"data_path": "output", "data_prefix": fnprefix})
+nest.SetKernelStatus({"data_path": "output/"+sys.argv[9]+"/"+sys.argv[10], "data_prefix": fnprefix})
 
 # Create and seed RNGs
 ms = 1000 # master seed
@@ -260,17 +246,17 @@ if Is_ext > 0:
   for k in range(N_I):
    nest.SetStatus([nodes_I[k]], {"I_e": iI_elist[k]})
 
-# Make input connections
-#noise=nest.Create("poisson_generator",1,{"rate": p_rate*N_neurons})
-
-#nest.CopyModel("static_synapse_hom_wd",
-#               "excitatory-input",
-#               {"weight":J_E, 
-#                "delay":delay})
-#nest.DivergentConnect(noise,nodes,model="excitatory-input")
+# Provide noise
+withnoise = False
+if withnoise:
+ noise=nest.Create("poisson_generator",1,{"rate": 100.*N_neurons})
+ nest.CopyModel("static_synapse_hom_wd",
+                "excitatory-input",
+                {"weight":J_E, 
+                 "delay":delay})
+ nest.DivergentConnect(noise,nodes,model="excitatory-input")
 
 # Make and connect recording devices
-N_rec = 50    # Number of neurons to record from
 if N_E > 0:
  spikes_E=nest.Create("spike_detector",1, 
                     [{"label": "brunel-py-ex", "withtime": True,
@@ -343,12 +329,6 @@ if N_E>0:
  print "Excitatory rate   : %.2f Hz" % rate_ex
  filename_E = nest.GetStatus(spikes_E,"filenames")
  os.rename(filename_E[0][0], filename_E[0][0][:-3]+"txt")
- #print filename_E[0][0][:-3]
- #for filename in os.listdir("./output"):
- # if filename == filename_E[0][0][:-3]+"txt":
- #  print filename
- #spiketrain_E = numpy.loadtxt(filename_E[0][0][:-3]+"txt")  
- #print spiketrain_E.shape, "size of spiketrain_E"
 
 if N_I>0:
  events_I = nest.GetStatus(spikes_I,"n_events")
@@ -359,33 +339,27 @@ if N_I>0:
  filename_I = nest.GetStatus(spikes_I,"filenames")
  print filename_I[0][0], "before"
  os.rename(filename_I[0][0], filename_I[0][0][:-3]+"txt")
- #print filename_I[0][0][:-3]
- #for filename in os.listdir("./output"):
- # if filename == filename_I[0][0][:-3]+"txt":
- #  print filename
- #spiketrain_I = numpy.loadtxt(filename_I[0][0][:-3]+"txt")  
- #print spiketrain_I.shape, "size of spiketrain_I"
 
 # Plot Results
 if plotresults:
  pylab.figure()
  if N_E>0:
   nest.voltage_trace.from_device(voltmeter_E)
+  pylab.savefig('./figures/'+sys.argv[9]+"/"+sys.argv[10]+"/"+fnprefix+'Vm_trace_E.eps')
  if N_I>0:
   nest.voltage_trace.from_device(voltmeter_I)
-  pylab.savefig('./figures/'+fnprefix+'Vm_trace.eps')
-  nest.voltage_trace.show()
+  pylab.savefig('./figures/'+sys.argv[9]+"/"+sys.argv[10]+"/"+fnprefix+'Vm_trace_I.eps')
+#  nest.voltage_trace.show()
  
  if nest.NumProcesses() == 1:
    if N_E>0:
     nest.raster_plot.from_device(spikes_E, hist=True, title='Excitatory')
-    pylab.savefig('./figures/'+fnprefix+'raster.eps')
+    pylab.savefig('./figures/'+sys.argv[9]+"/"+sys.argv[10]+"/"+fnprefix+'raster_E.eps')
    if N_I>0:  
     nest.raster_plot.from_device(spikes_I, hist=True, title='Inhibitory')
-    pylab.savefig('./figures/'+fnprefix+'raster.eps')
+    pylab.savefig('./figures/'+sys.argv[9]+"/"+sys.argv[10]+"/"+fnprefix+'raster_I.eps')
  else:
    print "Multiple MPI processes, skipping graphical output"
-
- pylab.show()
+# pylab.show()
 else:
  print "Set plotresults to True to show plots here."
