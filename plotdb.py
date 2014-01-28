@@ -35,16 +35,19 @@ if sys.argv[3] == 'both':
 	ni = 100
 	ne = 400
 	type = 'in' # Todo: plot both in same fig
+	directory = 'both'
 
 elif sys.argv[3] == 'ex':
 	ni = 0
 	ne = 400
 	type = 'ex'
+	directory = 'excit_only'
 
 else:
 	ni = 100
 	ne = 0
 	type = 'in'
+	directory = 'inh_only'
 
 dim1 = sys.argv[1]
 dim2 = sys.argv[2]
@@ -72,8 +75,8 @@ print cmd
 c.execute('CREATE TABLE IF NOT EXISTS t1 AS SELECT * FROM output '+cmd[0])
 c.execute('CREATE TABLE IF NOT EXISTS t2 AS SELECT * FROM t1 '+cmd[1])
 c.execute("CREATE TABLE IF NOT EXISTS subspace AS SELECT * FROM t2 WHERE \
-				ni=:ni AND ne=:ne AND type=:type AND trial=:trial AND thres=:thres",
-				{"ni": ni, "ne": ne, "type": type, "trial": trial, "thres": thres})
+				dir=:directory AND ni=:ni AND ne=:ne AND type=:type AND trial=:trial AND thres=:thres",
+				{"directory":directory, "ni": ni, "ne": ne, "type": type, "trial": trial, "thres": thres})
 
 # Todo: there can be a problem when different parameter values for d1 or d2
 # were tested in a different context. (The data can add more distinct values
@@ -105,6 +108,8 @@ print "tlist now:"
 for column in tlist:
 	for tuple in column:
 		print tuple
+
+print len(flist), len(flist[0])
 	
 # Read from files and plot
 fig = plt.figure(num=1, figsize=(10, 7), dpi=100, facecolor='w', edgecolor='k')
@@ -112,7 +117,8 @@ plt.rc('xtick', labelsize=5)
 plt.rc('ytick', labelsize=5)
 for i in range(ndim1):
 	for j in range(ndim2):
-#		try:
+#		try
+			print i, j, "Load"
 			spikes = np.loadtxt(flist[i][j].encode('ascii','ignore'),dtype='float')
 			print spikes[0]
 			ax = fig.add_subplot(ndim2,ndim1,ndim1*j+i+1)
@@ -131,10 +137,10 @@ for i in range(ndim1):
 			print i, j, str(flist[i][j])
 #		except:
 #			print i, j, "No file yet, or something wrong with loading or plotting"
-plt.suptitle(dim1+" vs "+dim2+" "+type+"("+sys.argv[3]+")")
+plt.suptitle(dim1+" vs "+dim2+" "+type+"("+directory+")")
 plt.tight_layout()
 plt.subplots_adjust(left=None, bottom=None, right=None, top=0.9)
-plt.savefig(dim1+'_'+dim2+'_'+type+'_'+sys.argv[3]+'.png')
+plt.savefig(dim1+'_'+dim2+'_'+type+'_'+directory+'.png')
 plt.show()
 # conn.commit()
 conn.close()
