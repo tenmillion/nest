@@ -35,19 +35,16 @@ if sys.argv[3] == 'both':
 	ni = 100
 	ne = 400
 	type = 'in' # Todo: plot both in same fig
-	ncells = ni
 
 elif sys.argv[3] == 'ex':
 	ni = 0
 	ne = 400
 	type = 'ex'
-	ncells = ne
 
 else:
 	ni = 100
 	ne = 0
 	type = 'in'
-	ncells = ni
 
 dim1 = sys.argv[1]
 dim2 = sys.argv[2]
@@ -110,7 +107,9 @@ for column in tlist:
 		print tuple
 	
 # Read from files and plot
-fig = plt.figure() 
+fig = plt.figure(num=1, figsize=(10, 7), dpi=100, facecolor='w', edgecolor='k')
+plt.rc('xtick', labelsize=5)
+plt.rc('ytick', labelsize=5)
 for i in range(ndim1):
 	for j in range(ndim2):
 #		try:
@@ -119,15 +118,23 @@ for i in range(ndim1):
 			ax = fig.add_subplot(ndim2,ndim1,ndim1*j+i+1)
 			ax.scatter(spikes[:,1],spikes[:,0],s=1,c='k',marker='.')
 			ax.set_title(tlist[i][j],size='6')
-			ax.axis([tstart,tstop,ne,ne+50]) # Only recorded from 50 cells
-			ax.set_xticklabels([])
-			ax.set_yticklabels([])
-			ax.set_xticks([tstart+(tstop-tstart)/5,tstart+(tstop-tstart)*2/5,tstart+(tstop-tstart)*3/5,tstart+(tstop-tstart)*4/5])
-			ax.set_yticks([ne+25])
+			if type=='ex': # Plot exc
+				ax.axis([tstart,tstop,0,50])			# Only recorded from 50 cells
+				ax.set_yticklabels([0,50])
+				ax.set_yticks([0,50])
+			else: # Plot inh
+				ax.axis([tstart,tstop,ne,ne+50])	# Only recorded from 50 cells
+				ax.set_yticklabels([ne,ne+50])
+				ax.set_yticks([ne,ne+50])
+			ax.set_xticklabels([tstart,tstart+(tstop-tstart)/5,tstart+(tstop-tstart)*2/5,tstart+(tstop-tstart)*3/5,tstart+(tstop-tstart)*4/5,tstop])
+			ax.set_xticks([tstart,tstart+(tstop-tstart)/5,tstart+(tstop-tstart)*2/5,tstart+(tstop-tstart)*3/5,tstart+(tstop-tstart)*4/5,tstop])
 			print i, j, str(flist[i][j])
 #		except:
 #			print i, j, "No file yet, or something wrong with loading or plotting"
+plt.suptitle(dim1+" vs "+dim2+" "+type+"("+sys.argv[3]+")")
+plt.tight_layout()
+plt.subplots_adjust(left=None, bottom=None, right=None, top=0.9)
+plt.savefig(dim1+'_'+dim2+'_'+type+'_'+sys.argv[3]+'.png')
 plt.show()
-	
 # conn.commit()
-# conn.close()
+conn.close()
