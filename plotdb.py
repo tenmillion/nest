@@ -53,7 +53,7 @@ if (dim1 != 'phi') and (dim2 != 'phi'):
 	phi = 5. #Assume this value if phi is fixed
 	cmd.append('WHERE phi='+str(phi))
 if (dim1 != 'iext') and (dim2 != 'iext'):
-	iext = 1.
+	iext = 100.
 	cmd.append('WHERE iext='+str(iext))
 if (dim1 != 'ji') and (dim2 != 'ji'):
 	ji = 0.1
