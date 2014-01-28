@@ -9,18 +9,20 @@ import sys
 from NeuroTools import analysis, signals
 
 cells = 50 # number of cells recorded from
-starttime = 0.
+starttime = 10.
 recordtime = 300.
-delta_t = 1.
+delta_t = 2.0
 
 if len(sys.argv) == 1: # test mode
  print "test mode"
- test = numpy.zeros((2,1000))
- for n in range(1000):
-  test[:,n] = [numpy.int(numpy.mod(n,50)+1),numpy.int(starttime+numpy.floor(n/50))]
-# test[:,1000] = [1,starttime+19.04]
-# test[:,1001] = [1,starttime+19.06]
-# test[:,1002] = [1,starttime+19.05]
+ times = numpy.arange(10,301,10)
+ ss = (times.shape)[0]
+ test = numpy.zeros((2,cells*ss))
+ print ss
+ for n in range(cells):
+  for s in range(ss):
+   print n*cells+s
+   test[:,s*cells+n] = [n,times[s]]
  numpy.savetxt("./test.txt",numpy.transpose(test))
  spiketrain = numpy.loadtxt("./test.txt")
 
@@ -40,24 +42,26 @@ indiv_trains = []
 for cell in range(cells):
   locs = (numpy.where(spiketrain[:,0] == cell+1))[0].tolist() #where returns tuple
   indiv_trains.append(spiketrain[locs].tolist())
-  #print indiv_trains[-1]
+print indiv_trains
 
 print "crosscorrelation"
 #Pairwise kappa
 ccmat = numpy.zeros((cells,cells))
 for cell1 in range(cells):
  for cell2 in range(cells):
-  st1 = signals.SpikeTrain(indiv_trains[cell1],t_start=starttime,t_stop=starttime+recordtime)
-  st2 = signals.SpikeTrain(indiv_trains[cell2],t_start=starttime,t_stop=starttime+recordtime)
-  #st1.raster_plot()
+  #print numpy.array(indiv_trains[cell1])
+  st1 = signals.SpikeTrain(numpy.array(indiv_trains[cell1]).flatten())
+  st2 = signals.SpikeTrain(numpy.array(indiv_trains[cell2]).flatten())
+  #print st1, st2
   #analysis.crosscorrelate(st1,st2,display=True,lag=1,kwargs={'bins':1000}) #plot requires display=True
   #pylab.show()
-  out=analysis.crosscorrelate(st1,st2,lag=delta_t,display=False) #return requires display=False
+  out=analysis.crosscorrelate(st1,st2,lag=delta_t/2.,display=False) #return requires display=False
+  #print out[0]
   ccmat[cell1,cell2] = (out[0].shape)[0]
 
 #Check that it performed correctly
-cell1=0
-cell2=0
+cell1=9
+cell2=9
 print len(indiv_trains[1]), len(indiv_trains[cell2]), ccmat[cell1,cell2], cell1, cell2
 
 #Get kappa_ii
