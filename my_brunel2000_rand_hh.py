@@ -4,7 +4,7 @@
 #
 # Temperature-enabled Hodgkin-Huxley network, based on Wang-Buzsaki 1996 and Brunel 2000.
 
-#import NeuroTools.signals # Needs to load before nest, or python core dumps. Not sure why.
+import NeuroTools.signals # Needs to load before nest, or python core dumps. Not sure why.
 #import NeuroTools.io # Needs latest version of NeuroTools downloaded thru svn
 import nest
 import nest.raster_plot
@@ -40,7 +40,7 @@ V_init	= -60.	# Initial membrane potential
 V_range = 20.	# Range of initial membrane potential
 delay   = 1.5   # synaptic delay in ms
 d_range = 0.	# Range of synaptic delay (0 to 1)
-thres = -20.	# Threshold of spike detection?
+thres = 0.	# Threshold of spike detection?
 
 N_neurons = N_E+N_I
 starttime = 0.
@@ -353,10 +353,16 @@ if plotresults:
  
  if nest.NumProcesses() == 1:
    if N_E>0:
+    #spiketrain_E = numpy.loadtxt(filename_E[0][0][:-3]+"txt")
     nest.raster_plot.from_device(spikes_E, hist=True, title='Excitatory')
+    #NeuroTools.signals.raster_plot(spikes_E, kwargs={'color':'b','marker':'.'})
+    #pylab.title('Excitatory')
     pylab.savefig('./figures/'+sys.argv[9]+"/"+sys.argv[10]+"/"+fnprefix+'raster_E.eps')
-   if N_I>0:  
-    nest.raster_plot.from_device(spikes_I, hist=True, title='Inhibitory')
+   if N_I>0:
+    #spiketrain_I = numpy.loadtxt(filename_I[0][0][:-3]+"txt")
+    #pylab.title('Inhibitory')
+    nest.raster_plot.from_device(spikes_E, hist=True, title='Inhibitory')
+    #NeuroTools.signals.raster_plot(spikes_I, kwargs={'color':'g','marker':'.'})
     pylab.savefig('./figures/'+sys.argv[9]+"/"+sys.argv[10]+"/"+fnprefix+'raster_I.eps')
  else:
    print "Multiple MPI processes, skipping graphical output"

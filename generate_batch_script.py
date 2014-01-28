@@ -14,8 +14,8 @@ Iext = numpy.array([1.6, 1.3, 1., 0.7, 0.4])  # external input current
 print phi
 
 def makecommand(direc,subdir,phi_,Iext_,JI_,Msyn_,NE_,NI_):
- cmd='python {:.2f} 4 {:.1f} 0 {:.2f} {} {} {} '.format(phi_,Iext_,JI_,Msyn_,NE_,NI_) + \
-      direc + ' ' + subdir
+ cmd='python my_brunel2000_rand_hh.py {:.2f} 4 {:.1f} 0 {:.2f} {} {} {} '.\
+     format(phi_,Iext_,JI_,Msyn_,NE_,NI_) + direc + ' ' + subdir
  return cmd
 
 ##########################
@@ -69,7 +69,7 @@ print "Generated shell script", direc+".sh with", lines, "lines"
 # Inhibitory only networks
 NE=0
 NI=100
-direc = "inhib_only"
+direc = "inh_only"
 lines = 0
 
 #Iext and phi
