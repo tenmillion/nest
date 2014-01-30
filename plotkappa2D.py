@@ -87,6 +87,8 @@ c.execute("CREATE TABLE IF NOT EXISTS subspace AS SELECT * FROM t1 WHERE \
 				dir=:directory AND ni=:ni AND ne=:ne AND type=:type",
 				{"directory":directory, "ni": ni, "ne": ne, "type": celltype})
 
+## If params are modified, modify down to here.
+
 print 'Reading kappas...'
 kappas = []
 d1s = c.execute('SELECT DISTINCT '+dim1+' FROM subspace ORDER BY '+dim1+' ASC').fetchall()

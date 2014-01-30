@@ -18,14 +18,6 @@ if not os.path.isfile('output.db'):
 conn = sql.connect('output.db')
 c = conn.cursor()
 
-#testkappa = c.execute('PRAGMA index_info(kappa)')		  # Check for column kappa in output.db
-#nokappa = testkappa.fetchall()
-#print "kappa exists?", nokappa # Should be empty list if kappa doesn't exist yet
-#if nokappa) == 0:
-#	c.execute('ALTER TABLE output ADD COLUMN kappa real') # Add kappa column if it doesn't exist
-#	print "Added new column kappa to output"
-#	conn.commit()
-
 # DB structure:
 # CREATE TABLE output (filename text PRIMARY KEY, dir text, thres int,
 # phi real, iext real, ji real, je real, jis real, ni int, ne int,
@@ -37,57 +29,63 @@ c = conn.cursor()
 
 print 'Creating 2D supspace...'
 c.execute('DROP TABLE IF EXISTS t1')
-c.execute('DROP TABLE IF EXISTS t2')
-c.execute('DROP TABLE IF EXISTS t3')
 c.execute('DROP TABLE IF EXISTS subspace')
 
 if sys.argv[3] == 'both':
 	ni = 100
 	ne = 400
-	type = 'in' # Todo: plot both in same fig
+	celltype = 'in' # Todo: plot both in same fig
 	directory = 'both'
 
 elif sys.argv[3] == 'ex':
 	ni = 0
 	ne = 400
-	type = 'ex'
+	celltype = 'ex'
 	directory = 'excit_only'
 
 else:
 	ni = 100
 	ne = 0
-	type = 'in'
+	celltype = 'in'
 	directory = 'inh_only'
+
+thres = 0 # Todo: variable thres
 
 dim1 = sys.argv[1]
 dim2 = sys.argv[2]
-cmd = []
+
+cmd = 'WHERE'
 if (dim1 != 'phi') and (dim2 != 'phi'):
 	phi = 5. #Assume this value if phi is fixed
-	cmd.append('WHERE phi='+str(phi))
+	cmd+=' phi='+str(phi)+' AND'
 if (dim1 != 'iext') and (dim2 != 'iext'):
 	iext = 100.
-	cmd.append('WHERE iext='+str(iext))
+	cmd+=' iext='+str(iext)+' AND'
 if (dim1 != 'ji') and (dim2 != 'ji'):
-	ji = 0.1
-	cmd.append('WHERE ji='+str(ji))
-if (dim1 != 'msyn') and (dim2 != 'msyn'):
-	msyn = 100
-	cmd.append('WHERE msyn='+str(msyn))
+	ji = 5.
+	cmd+=' ji='+str(ji)+' AND')
+if (dim1 != 'je') and (dim2 != 'je'):
+	je = 2.
+	cmd+=' ji='+str(je)+' AND'
+if (dim1 != 'mi') and (dim2 != 'mi'):
+	mi = 25.
+	cmd+=' mi='+str(mi)+' AND'
+if (dim1 != 'me') and (dim2 != 'me'):
+	me = 10.
+	cmd+=' me='+str(me)+' AND'
+cmd+='thres='+str(thres)
 
-trial = 0 # Todo: get all trials
-thres = 0 # Todo: variable thres
-tstart = 0
+tstart = 1000
 tstop = 1300
 binwidth = 1.
 
 print cmd
 
-c.execute('CREATE TABLE IF NOT EXISTS t1 AS SELECT * FROM output '+cmd[0])
-c.execute('CREATE TABLE IF NOT EXISTS t2 AS SELECT * FROM t1 '+cmd[1])
-c.execute("CREATE TABLE IF NOT EXISTS subspace AS SELECT * FROM t2 WHERE \
-				dir=:directory AND ni=:ni AND ne=:ne AND type=:type AND trial=:trial AND thres=:thres",
-				{"directory":directory, "ni": ni, "ne": ne, "type": type, "trial": trial, "thres": thres})
+c.execute('CREATE TABLE IF NOT EXISTS t1 AS SELECT * FROM output '+cmd)
+c.execute("CREATE TABLE IF NOT EXISTS subspace AS SELECT * FROM t1 WHERE \
+				dir=:directory AND ni=:ni AND ne=:ne AND type=:type",
+				{"directory":directory, "ni": ni, "ne": ne, "type": celltype})
+## If params are modified, modify down to here.
 
 ndim1=len(c.execute('SELECT DISTINCT '+dim1+' FROM subspace').fetchall())
 ndim2=len(c.execute('SELECT DISTINCT '+dim2+' FROM subspace').fetchall())
@@ -135,9 +133,9 @@ for i in range(ndim1):
 		print k
 	kappas.append(row)
 print kappas
-filename = dim1+dim2+".txt"
-np.savetxt(filename,kappas)
-print "Saved", np.shape(kappas), "kappa matrix to ./"+filename
+outfilename = dim1+dim2+".txt"
+np.savetxt(outfilename,kappas)
+print "Saved", np.shape(kappas), "kappa matrix to ./"+outfilename
 conn.commit()
 conn.close()
 print "Wrote kappas to DB"
