@@ -1,8 +1,5 @@
-#plotkappa2D.py
-import numpy as np
-import pylab as plt
-
 # -*- coding: utf-8 -*-
+# plotkappa2D.py
 # Script to plot from a database of results.
 # Adapted for the NEST simulation.
 # sample input: python plotkappa2D.py d1 d2 type
@@ -11,8 +8,8 @@ import pylab as plt
 import sqlite3 as sql
 import sys
 import os
-import matplotlib.pyplot as plt
 import numpy as np
+import pylab as plt
 
 # Read file names and param values from DB
 if not os.path.isfile('output.db'):
@@ -78,7 +75,6 @@ if (dim1 != 'msyn') and (dim2 != 'msyn'):
 	msyn = 100
 	cmd.append('WHERE msyn='+str(msyn))
 
-trial = 0 # Todo: get all trials
 thres = 0 # Todo: variable thres
 tstart = 1000
 tstop = 1300
@@ -89,8 +85,8 @@ print cmd
 c.execute('CREATE TABLE IF NOT EXISTS t1 AS SELECT * FROM output '+cmd[0])
 c.execute('CREATE TABLE IF NOT EXISTS t2 AS SELECT * FROM t1 '+cmd[1])
 c.execute("CREATE TABLE IF NOT EXISTS subspace AS SELECT * FROM t2 WHERE \
-				dir=:directory AND ni=:ni AND ne=:ne AND type=:type AND trial=:trial AND thres=:thres",
-				{"directory":directory, "ni": ni, "ne": ne, "type": celltype, "trial": trial, "thres": thres})
+				dir=:directory AND ni=:ni AND ne=:ne AND type=:type AND thres=:thres",
+				{"directory":directory, "ni": ni, "ne": ne, "type": celltype, "thres": thres})
 
 print 'Reading kappas...'
 kappas = []
