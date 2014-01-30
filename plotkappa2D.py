@@ -5,11 +5,12 @@
 # sample input: python plotkappa2D.py d1 d2 type
 # Y Yamamura Jan 30, 2014
 
+from mpl_toolkits.axes_grid1 import make_axes_locatable
 import sqlite3 as sql
 import sys
 import os
 import numpy as np
-import pylab as plt
+from pylab import *
 
 # Read file names and param values from DB
 if not os.path.isfile('output.db'):
@@ -64,17 +65,17 @@ if (dim1 != 'iext') and (dim2 != 'iext'):
 	cmd+=' iext='+str(iext)+' AND'
 if (dim1 != 'ji') and (dim2 != 'ji'):
 	ji = 5.
-	cmd+=' ji='+str(ji)+' AND')
+	cmd+=' ji='+str(ji)+' AND'
 if (dim1 != 'je') and (dim2 != 'je'):
 	je = 2.
-	cmd+=' ji='+str(je)+' AND'
+	cmd+=' je='+str(je)+' AND'
 if (dim1 != 'mi') and (dim2 != 'mi'):
 	mi = 25.
 	cmd+=' mi='+str(mi)+' AND'
 if (dim1 != 'me') and (dim2 != 'me'):
 	me = 10.
 	cmd+=' me='+str(me)+' AND'
-cmd+='thres='+str(thres)
+cmd+=' thres='+str(thres)
 
 tstart = 1000
 tstop = 1300
@@ -86,7 +87,6 @@ c.execute('CREATE TABLE IF NOT EXISTS t1 AS SELECT * FROM output '+cmd)
 c.execute("CREATE TABLE IF NOT EXISTS subspace AS SELECT * FROM t1 WHERE \
 				dir=:directory AND ni=:ni AND ne=:ne AND type=:type",
 				{"directory":directory, "ni": ni, "ne": ne, "type": celltype})
-
 ## If params are modified, modify down to here.
 
 print 'Reading kappas...'
@@ -114,18 +114,22 @@ npkappas = np.array(kappas)
 #plt.rc('ytick', labelsize=5)
 
 print "Kappas averaged over trials:"
-print npkappas
+print npkappas.clip(0,1)
 
 ###
 
-fig = plt.figure(facecolor='w', edgecolor='k')
-plt.title(dim1+" vs "+dim2+" "+celltype+"("+directory+")")
-plt.pcolor(npkappas)
-plt.yticks(np.arange(0,len(d2s),1)+0.5,np.array(d1s)[:,0])
-plt.ylabel(dim1)
-plt.xticks(np.arange(0,len(d1s),1)+0.5,np.array(d2s)[:,0])
-plt.xlabel(dim2)
-
-plt.colorbar()
-plt.savefig("heatmap_"+dim1+"_"+dim2+"_"+directory+"_"+celltype+".png")
-plt.show()
+fig, ax = plt.subplots()
+fig = plt.gcf()
+title(dim1+" vs "+dim2+" "+celltype+"("+directory+")")
+heatmap = ax.pcolor(npkappas.clip(0,1))
+ax.axis('tight')
+yticks(np.arange(0,len(d1s),1)+0.5,np.array(d1s)[:,0])
+ylabel(dim1)
+xticks(np.arange(0,len(d2s),1)+0.5,np.array(d2s)[:,0])
+xlabel(dim2)
+ax.set_aspect('equal')
+divider = make_axes_locatable(ax)
+cax = divider.append_axes("right", size="5%", pad=0.05)
+colorbar(heatmap,cax=cax)
+savefig("figures/"+"heatmap_"+dim1+"_"+dim2+"_"+directory+"_"+celltype+".png")
+show()

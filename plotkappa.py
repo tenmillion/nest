@@ -66,17 +66,17 @@ if (dim1 != 'iext') and (dim2 != 'iext'):
 	cmd+=' iext='+str(iext)+' AND'
 if (dim1 != 'ji') and (dim2 != 'ji'):
 	ji = 5.
-	cmd+=' ji='+str(ji)+' AND')
+	cmd+=' ji='+str(ji)+' AND'
 if (dim1 != 'je') and (dim2 != 'je'):
 	je = 2.
-	cmd+=' ji='+str(je)+' AND'
+	cmd+=' je='+str(je)+' AND'
 if (dim1 != 'mi') and (dim2 != 'mi'):
 	mi = 25.
 	cmd+=' mi='+str(mi)+' AND'
 if (dim1 != 'me') and (dim2 != 'me'):
 	me = 10.
 	cmd+=' me='+str(me)+' AND'
-cmd+='thres='+str(thres)
+cmd+=' thres='+str(thres)
 
 tstart = 1000
 tstop = 1300
@@ -118,6 +118,14 @@ cmds = [(np.array(d2s)[:,0].tolist(), npkappas[i].tolist()) for i in range(len(d
 
 fig = plt.figure(facecolor='w', edgecolor='k')
 ax = fig.add_axes([0.1, 0.1, 0.6, 0.75])
+ax.set_xscale('log')
+ax.set_yscale('log')
+ax.set_xticks(np.array(d2s)[:,0].tolist())
+ax.set_xticklabels(np.array(d2s)[:,0].tolist())
+ax.set_yticks([0,0.1,0.2,0.3,0.4,0.5,1])
+ax.set_yticklabels([0,0.1,0.2,0.3,0.4,0.5,1])
+min_kappa=sorted(npkappas[np.where(npkappas>=0)].flatten())[0]
+plt.axis([min(np.array(d2s)[:,0].tolist()),max(np.array(d2s)[:,0].tolist()),min_kappa*0.9,1])
 labels = [dim1+"="+str(np.array(d1s)[i,0]) for i in range(len(d1s))]
 handles = []
 i = 0
@@ -133,5 +141,5 @@ plt.title(dim1+" vs "+dim2+" "+celltype+"("+directory+")")
 plt.ylabel("Kappa")
 plt.xlabel(dim2)
 
-plt.savefig("lines_"+dim1+"_"+dim2+"_"+directory+"_"+celltype+".png")
+plt.savefig("figures/"+"lines_"+dim1+"_"+dim2+"_"+directory+"_"+celltype+".png")
 plt.show()

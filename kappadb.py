@@ -7,6 +7,7 @@
 import sqlite3 as sql
 import sys
 import os
+import math
 import numpy as np
 import kappamat as km #Make sure kappamat.py is in the same directory as this
 
@@ -63,17 +64,17 @@ if (dim1 != 'iext') and (dim2 != 'iext'):
 	cmd+=' iext='+str(iext)+' AND'
 if (dim1 != 'ji') and (dim2 != 'ji'):
 	ji = 5.
-	cmd+=' ji='+str(ji)+' AND')
+	cmd+=' ji='+str(ji)+' AND'
 if (dim1 != 'je') and (dim2 != 'je'):
 	je = 2.
-	cmd+=' ji='+str(je)+' AND'
+	cmd+=' je='+str(je)+' AND'
 if (dim1 != 'mi') and (dim2 != 'mi'):
 	mi = 25.
 	cmd+=' mi='+str(mi)+' AND'
 if (dim1 != 'me') and (dim2 != 'me'):
 	me = 10.
 	cmd+=' me='+str(me)+' AND'
-cmd+='thres='+str(thres)
+cmd+=' thres='+str(thres)
 
 tstart = 1000
 tstop = 1300
@@ -128,14 +129,16 @@ for i in range(ndim1):
 		except:
 			print i, j, "No file yet, or something wrong with loading"
 		k = km.kappa(spikes,binwidth,tstart,tstop)
+		if (k is None) or math.isnan(k):
+			k=-1
 		c.execute('UPDATE output SET kappa=? WHERE filename=?', (k, flist[i][j]))
 		row.append(k)
 		print k
 	kappas.append(row)
 print kappas
-outfilename = dim1+dim2+".txt"
-np.savetxt(outfilename,kappas)
-print "Saved", np.shape(kappas), "kappa matrix to ./"+outfilename
+outfilename = dim1+"_"+dim2+".txt"
+np.savetxt('figures/'+outfilename,kappas)
+print "Saved", np.shape(kappas), "kappa matrix to figures/"+outfilename
 conn.commit()
 conn.close()
 print "Wrote kappas to DB"

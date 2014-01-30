@@ -26,8 +26,8 @@ J_E    = float(sys.argv[5])		  # 2.0 nS in NEST
 M_syn_II = float(sys.argv[6])     # Probability of connection from inhibitory neuron to another neuron in % 
 M_syn_EE = float(sys.argv[7]) # Probability of connection from inhibitory neuron to another neuron in %
 
-N_E = int(sys.argv[8])
-N_I = int(sys.argv[9])
+N_I = int(sys.argv[8])
+N_E = int(sys.argv[9])
 
 M_syn_EI = M_syn_EE
 M_syn_EI = M_syn_II*(M_syn_EE)/10.

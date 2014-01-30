@@ -17,8 +17,9 @@ else:
 	
 # Read filenames from directory and add table entries
 # expected format of output file names:
-# "output/both/Iext_phi/T0mVphi0.6g4.0in40.0pA_JI-0.100+-0.0_E400I0_MsynII100_0128-1413-41_brunel-py-ex-401-0.txt"
-#               dir             thres    phi,   g,    iext,            ji,      jis    ne,     ni,            msyn,                                     type,  trial
+# /home/yoriko-y/Dropbox/Academic/NAIST_MI/Cool/_MODELS/Nest/output/
+# inh_only/JI_phi/T0mVphi6.950in100.0pA_JI-0.1_JE2.0+-0.0_E0I100_MsynI25.0_MsynE10.0_0130-1540-08_brunel-py-in-101-0.txt
+# dir             thres    phi,   iext,  ji,   je   jis    ne, ni,  mi,     me                              type,  trial
 
 nadded = 0
 nskipped = 0
@@ -31,10 +32,10 @@ for x in glob.glob('output/*/*/*.txt'):
 	phi_x = re.search('phi([0-9]+\.[0-9]+)',x).group(1)		#
 	iext_x = re.search('in([0-9]+\.[0-9]+)pA',x).group(1)	#
 	ji_x = re.search('JI\-([0-9]+\.[0-9]+)',x).group(1)			#
-	je_x = re.search('JE\-([0-9]+\.[0-9]+)',x).group(1)			#
+	je_x = re.search('JE([0-9]+\.[0-9]+)',x).group(1)			#
 	jis_x = re.search('\+\-([0-9]+\.[0-9]+)',x).group(1)
 	ni_x = re.search('I([0-9]+)',x).group(1)						#
-	ne_x = re.search('E([0-9]+)',x).group(1)						#
+	ne_x = re.search('_E([0-9]+)',x).group(1)						#
 	mi_x = re.search('MsynI([0-9]+\.[0-9]+)',x).group(1)			#
 	me_x = re.search('MsynE([0-9]+\.[0-9]+)',x).group(1)			#
 	type_x = re.search('brunel\-py\-(ex|in)',x).group(1)		#
