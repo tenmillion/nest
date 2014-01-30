@@ -23,16 +23,18 @@ def sort_spikes(spikes):
 	  sorted_spiketrains.append(spikes_tr[1,locs])
 	return sorted_spiketrains
 
-def pairwise_kappa(s1, s2, binwidth): # expects numpy arrays
+def pairwise_kappa(s1, s2, binwidth, tstart, tstop): # expects numpy arrays
+	w1 = s1[numpy.where((s1 >= tstart) & (s1 <= tstop))] # Windowed s1
+	w2 = s2[numpy.where((s2 >= tstart) & (s2 <= tstop))]
 	overlaps = 0
-	for k in xrange(0, s1.shape[0]):
-		overlaps += numpy.count_nonzero((s1[k] - binwidth/2. <= s2) & (s2 <= s1[k] + binwidth/2.))
+	for k in xrange(0, w1.shape[0]):
+		overlaps += numpy.count_nonzero((w1[k] - binwidth/2. <= w2) & (w2 <= w1[k] + binwidth/2.))
 #		print overlaps, "overlaps"
 #		print "spike trains:", id1, "("+str(st1.shape[0])+" spikes) and", id2, "("+str(st2.shape[0])+" spikes)"
 	return overlaps
 	
 # Somehow when I import functions the array[i][j] syntax doesn't work even for numpy arrays
-def kappamat(sorted, binwidth):
+def kappamat(sorted, binwidth, tstart, tstop):
 	xymat = []
 	for s1 in range(len(sorted)):
 		row = []
@@ -40,7 +42,7 @@ def kappamat(sorted, binwidth):
 		for s2 in range(len(sorted)):
 			st2=sorted[s2]
 			if ((len(st1)!=0) and (len(st2)!=0)):
-				row.append(pairwise_kappa(st1, st2, binwidth)) # not normalized
+				row.append(pairwise_kappa(st1, st2, binwidth, tstart, tstop)) # not normalized
 			else:
 				row.append(0.)
 		xymat.append(row)
@@ -59,9 +61,9 @@ def normalize_kappa(kmat):
 				#Should be the same as /numpy.sqrt(len(st1)*len(st2)) for small bins
 	return normalized.tolist()
 	
-def kappa(spikes, binwidth): # Returns normalized kappa for entire set of spike trains
+def kappa(spikes, binwidth, tstart, tstop): # Returns normalized kappa for entire set of spike trains
 	sorted = sort_spikes(spikes)
-	kmat=kappamat(sorted, binwidth)
+	kmat=kappamat(sorted, binwidth, tstart, tstop)
 	nkmat = normalize_kappa(kmat)
 #	k=numpy.mean(nkmat) # Count empty spike trains too
 	npnkmat = numpy.array(nkmat)

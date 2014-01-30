@@ -18,12 +18,13 @@ if not os.path.isfile('output.db'):
 conn = sql.connect('output.db')
 c = conn.cursor()
 
-testkappa = c.execute('PRAGMA index_info(kappa)')		   # Check for column kappa in output.db
-nokappa = testkappa.fetchall()
-print "kappa exists?", nokappa # Should be empty list if kappa doesn't exist yet
-if nokappa:
-	c.execute('ALTER TABLE output ADD COLUMN kappa real') # Add kappa column if it doesn't exist
-	print "Added new column kappa to output"
+#testkappa = c.execute('PRAGMA index_info(kappa)')		  # Check for column kappa in output.db
+#nokappa = testkappa.fetchall()
+#print "kappa exists?", nokappa # Should be empty list if kappa doesn't exist yet
+#if nokappa) == 0:
+#	c.execute('ALTER TABLE output ADD COLUMN kappa real') # Add kappa column if it doesn't exist
+#	print "Added new column kappa to output"
+#	conn.commit()
 
 # DB structure:
 # output (filename text PRIMARY KEY, thres int, 
@@ -76,7 +77,7 @@ if (dim1 != 'msyn') and (dim2 != 'msyn'):
 
 trial = 0 # Todo: get all trials
 thres = 0 # Todo: variable thres
-tstart = 1000
+tstart = 0
 tstop = 1300
 binwidth = 1.
 
@@ -128,7 +129,7 @@ for i in range(ndim1):
 			print spikes[0], "<-first row"
 		except:
 			print i, j, "No file yet, or something wrong with loading"
-		k = km.kappa(spikes,binwidth)
+		k = km.kappa(spikes,binwidth,tstart,tstop)
 		c.execute('UPDATE output SET kappa=? WHERE filename=?', (k, flist[i][j]))
 		row.append(k)
 		print k

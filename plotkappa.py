@@ -1,7 +1,8 @@
 # -*- coding: utf-8 -*-
-#plotkappa.py
+# plotkappa.py
 # Script to plot overlapping line graphs from a database of results.
 # Adapted for the NEST simulation.
+# Almost the exact same as plotkappa2D...
 # sample input: python plotkappa.py d1 d2 type
 # Y Yamamura Jan 30, 2014
 
@@ -10,8 +11,7 @@ import numpy as np
 import sqlite3 as sql
 import sys
 import os
-import matplotlib.pyplot as plt
-import numpy as np
+import pylab as plt
 
 # Read file names and param values from DB
 if not os.path.isfile('output.db'):
@@ -92,9 +92,9 @@ c.execute("CREATE TABLE IF NOT EXISTS subspace AS SELECT * FROM t2 WHERE \
 
 print 'Reading kappas...'
 kappas = []
-d1s = c.execute('SELECT DISTINCT '+dim1+' FROM subspace ORDER BY '+dim1+' ASC').fetchall()
+d1s = c.execute('SELECT DISTINCT '+dim1+' FROM subspace ORDER BY '+dim1+' DESC').fetchall()		# Display higher param at top
 d2s = c.execute('SELECT DISTINCT '+dim2+' FROM subspace ORDER BY '+dim2+' ASC').fetchall()
-print "Will plot", len(d1s), "by", len(d1s), "heat map of kappas"
+print "Will plot line graphs for ", len(d1s), dim1, "values", len(d2s), "data points in", dim2
 
 print dim1, d1s
 print dim2, d2s
@@ -102,30 +102,36 @@ print dim2, d2s
 for d1 in d1s:
 	ktemp = []
 	for d2 in d2s:
-		entry = c.execute('SELECT kappa, '+dim1+', '+dim2+' FROM subspace WHERE '+dim1+'=? AND '+dim2+'=? \
+		entry = c.execute('SELECT kappa FROM subspace WHERE '+dim1+'=? AND '+dim2+'=? \
 							ORDER BY trial DESC',(d1[0],d2[0])).fetchall()
 		print len(entry), "trial(s) found for", dim1, d1[0], dim2, d2[0]
+		print entry
 		ktemp.append(np.mean(entry))
 	kappas.append(ktemp)
 conn.close()
 npkappas = np.array(kappas)
 
-#fig = plt.figure(num=1, figsize=(10, 7), dpi=100, facecolor='w', edgecolor='k')
-#plt.rc('xtick', labelsize=5)
-#plt.rc('ytick', labelsize=5)
-
 print "Kappas averaged over trials:"
 print npkappas
 
-###
+cmds = [(np.array(d2s)[:,0].tolist(), npkappas[i].tolist()) for i in range(len(d1s))]
 
-fig = plt.figure()
+fig = plt.figure(facecolor='w', edgecolor='k')
+ax = fig.add_axes([0.1, 0.1, 0.6, 0.75])
+labels = [dim1+"="+str(np.array(d1s)[i,0]) for i in range(len(d1s))]
+handles = []
+i = 0
+for cmd in cmds:
+	i +=1
+	axis1,axis2 = cmd
+	handle,=ax.plot(axis1,axis2,'o-')
+	handles.append(handle)
+plt.subplots_adjust(left=None, bottom=None, right=None, top=0.95)
+ax.legend(handles, labels, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+
 plt.title(dim1+" vs "+dim2+" "+celltype+"("+directory+")")
-plt.pcolor(npkappas)
-plt.yticks(np.arange(0,len(d2s),1)+0.5,np.array(d1s)[:,0])
-plt.ylabel(dim1)
-plt.xticks(np.arange(0,len(d1s),1)+0.5,np.array(d2s)[:,0])
+plt.ylabel("Kappa")
 plt.xlabel(dim2)
 
-plt.colorbar()
+plt.savefig("lines_"+dim1+"_"+dim2+"_"+directory+"_"+celltype+".png")
 plt.show()

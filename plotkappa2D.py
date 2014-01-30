@@ -92,7 +92,7 @@ print 'Reading kappas...'
 kappas = []
 d1s = c.execute('SELECT DISTINCT '+dim1+' FROM subspace ORDER BY '+dim1+' ASC').fetchall()
 d2s = c.execute('SELECT DISTINCT '+dim2+' FROM subspace ORDER BY '+dim2+' ASC').fetchall()
-print "Will plot", len(d1s), "by", len(d1s), "heat map of kappas"
+print "Will plot", len(d1s), "by", len(d2s), "heat map of kappas"
 
 print dim1, d1s
 print dim2, d2s
@@ -100,7 +100,7 @@ print dim2, d2s
 for d1 in d1s:
 	ktemp = []
 	for d2 in d2s:
-		entry = c.execute('SELECT kappa, '+dim1+', '+dim2+' FROM subspace WHERE '+dim1+'=? AND '+dim2+'=? \
+		entry = c.execute('SELECT kappa FROM subspace WHERE '+dim1+'=? AND '+dim2+'=? \
 							ORDER BY trial DESC',(d1[0],d2[0])).fetchall()
 		print len(entry), "trial(s) found for", dim1, d1[0], dim2, d2[0]
 		ktemp.append(np.mean(entry))
@@ -117,7 +117,7 @@ print npkappas
 
 ###
 
-fig = plt.figure()
+fig = plt.figure(facecolor='w', edgecolor='k')
 plt.title(dim1+" vs "+dim2+" "+celltype+"("+directory+")")
 plt.pcolor(npkappas)
 plt.yticks(np.arange(0,len(d2s),1)+0.5,np.array(d1s)[:,0])
@@ -126,4 +126,5 @@ plt.xticks(np.arange(0,len(d1s),1)+0.5,np.array(d2s)[:,0])
 plt.xlabel(dim2)
 
 plt.colorbar()
+plt.savefig("heatmap_"+dim1+"_"+dim2+"_"+directory+"_"+celltype+".png")
 plt.show()
