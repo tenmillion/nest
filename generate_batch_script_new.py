@@ -11,6 +11,8 @@ import numpy as np
 phi = np.array([5*3**((i-37)/10.) for i in np.arange(10,41,3)]) # temperature
 print phi
 
+i = 1.0
+
 MsynI = np.array([100, 60, 40, 25, 10])    # mean connectivity in %
 JI = np.array([5.0, 2.0, 1.0, 0.5, 0.1]) # synaptic weight (unit nS)
 
@@ -32,25 +34,28 @@ NE=0
 NI=100
 direc = "inh_only"
 lines = 0
+je = 2.0 # not used
+me = 10. # not used
 fh = open(direc+".sh", 'w')
 
-#MsynI and phi
-subdir = "connectivity"
-print >>fh, "mkdir "+subdir
-j = 2.0
-i = 1.0
-for mm in Msyn:
- for pp in phi:
-  print >>fh, makecommand(direc,subdir,pp,i,j,mm,m,NE,NI)
+#MsynI and phi (JI fixed)
+subdir = "inh_connectivity"
+print >>fh, "mkdir output/"+direc+"/"+subdir
+print >>fh, "mkdir figures/"+direc+"/"+subdir
+ji = 5.0
+for MM in MsynI:
+ for PP in phi:
+  print >>fh, makecommand(direc,subdir,PP,i,ji,je,MM,me,NE,NI)
   lines += 1
 
-#JI and phi
-subdir = "JI_phi"
-m =100
-i = Iext[2] # Not decided yet
-for jj in JI:
- for pp in phi:
-  print >>fh, makecommand(direc,subdir,pp,i,jj,m,NE,NI)
+#JI and phi (MsynI fixed)
+subdir = "inh_weights"
+print >>fh, "mkdir output/"+direc+"/"+subdir
+print >>fh, "mkdir figures/"+direc+"/"+subdir
+mi = 25.
+for JJ in JI:
+ for PP in phi:
+  print >>fh, makecommand(direc,subdir,PP,i,JJ,je,mi,me,NE,NI)
   lines += 1
 
 fh.close()
@@ -62,42 +67,54 @@ NE=400
 NI=100
 direc = "both"
 lines = 0
-
-#Iext and phi
-subdir = "Iext_phi"
-j = 0.1
-m = 100
 fh = open(direc+".sh", 'w')
-for ii in Iext[[0,2,4]]:
- for pp in phi[[0,2,4]]:
-  print >>fh, makecommand(direc,subdir,pp,ii,j,m,NE,NI)
+
+#MsynI and phi (MsynE, JI, JE fixed)
+subdir = "inh_connectivity"
+print >>fh, "mkdir output/"+direc+"/"+subdir
+print >>fh, "mkdir figures/"+direc+"/"+subdir
+ji = 5.0
+je = 2.0
+me = 10.
+for MM in MsynIepi:
+ for PP in phi:
+  print >>fh, makecommand(direc,subdir,PP,i,ji,je,MM,me,NE,NI)
   lines += 1
 
-#Msyn and JI
-subdir = "Msyn_JI"
-p = 5
-i = Iext[2] # Not decided yet
-for mm in Msyn[[0,2,4]]:
- for jj in JI[[0,2,4]]:
-  print >>fh, makecommand(direc,subdir,p,i,jj,mm,NE,NI)
+#MsynE and phi (MsynI, JI, JE fixed)
+subdir = "exc_connectivity"
+print >>fh, "mkdir output/"+direc+"/"+subdir
+print >>fh, "mkdir figures/"+direc+"/"+subdir
+ji = 5.0
+je = 2.0
+mi = 25.
+for MM in MsynEepi:
+ for PP in phi:
+  print >>fh, makecommand(direc,subdir,PP,i,ji,je,mi,MM,NE,NI)
   lines += 1
 
-#Msyn and phi
-subdir = "Msyn_phi"
-j = 0.1
-i = Iext[2] # Not decided yet
-for mm in Msyn[[0,2,4]]:
- for pp in phi[[0,2,4]]:
-  print >>fh, makecommand(direc,subdir,pp,i,j,mm,NE,NI)
+#JI and phi (MsynI, MsynE, JE fixed)
+subdir = "inh_weights"
+print >>fh, "mkdir output/"+direc+"/"+subdir
+print >>fh, "mkdir figures/"+direc+"/"+subdir
+je = 2.0
+mi = 25.
+me = 10.
+for JJ in JI:
+ for PP in phi:
+  print >>fh, makecommand(direc,subdir,PP,i,JJ,je,mi,me,NE,NI)
   lines += 1
 
-#JI and phi
-subdir = "JI_phi"
-m =100
-i = Iext[2] # Not decided yet
-for jj in JI[[0,2,4]]:
- for pp in phi[[0,2,4]]:
-  print >>fh, makecommand(direc,subdir,pp,i,jj,m,NE,NI)
+#JE and phi (MsynI, MsynE, JI fixed)
+subdir = "exc_weights"
+print >>fh, "mkdir output/"+direc+"/"+subdir
+print >>fh, "mkdir figures/"+direc+"/"+subdir
+ji = 5.0
+mi = 25.
+me = 10.
+for JJ in JE:
+ for PP in phi:
+  print >>fh, makecommand(direc,subdir,PP,i,ji,JJ,mi,me,NE,NI)
   lines += 1
 
 fh.close()
