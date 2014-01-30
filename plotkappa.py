@@ -1,6 +1,8 @@
-#plotkappa.py
+#plotkappa2D.py
 import numpy as np
 import pylab as plt
+
+###
 
 kappas=np.loadtxt("phiiext.txt")
 fig = plt.figure()

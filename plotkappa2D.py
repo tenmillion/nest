@@ -1,7 +1,12 @@
+#plotkappa2D.py
+import numpy as np
+import pylab as plt
+
+# -*- coding: utf-8 -*-
 # Script to plot from a database of results.
 # Adapted for the NEST simulation.
-# sample input: python plotdb.py d1 d2 celltype
-# Y Yamamura Jan 29, 2014
+# sample input: python plotkappa2D.py d1 d2 type
+# Y Yamamura Jan 30, 2014
 
 import sqlite3 as sql
 import sys
@@ -17,13 +22,20 @@ if not os.path.isfile('output.db'):
 conn = sql.connect('output.db')
 c = conn.cursor()
 
+testkappa = c.execute('PRAGMA index_info(kappa)')		   # Check for column kappa in output.db
+nokappa = testkappa.fetchall()
+print nokappa # Should be empty list if kappa doesn't exist yet
+if nokappa:
+	c.execute('ALTER TABLE output ADD COLUMN kappa real') # Add kappa column if it doesn't exist
+
 # DB structure:
 # output (filename text PRIMARY KEY, thres int, 
 #				phi real, g real, iext real, ji real, jis real,
-#				ne int, ni int, msyn int, type text, trial int)
+#				ne int, ni int, msyn int, type text, trial int, kappa real)
 # Expected variables: phi, iext, ji, msyn
 
 # Plot by any two dimensions of the parameter space
+# Parameter range must be rectangular
 
 print 'Creating 2D supspace...'
 c.execute('DROP TABLE IF EXISTS t1')
@@ -34,19 +46,19 @@ c.execute('DROP TABLE IF EXISTS subspace')
 if sys.argv[3] == 'both':
 	ni = 100
 	ne = 400
-	celltype = 'ex' # Todo: plot both in same fig
+	type = 'in' # Todo: plot both in same fig
 	directory = 'both'
 
 elif sys.argv[3] == 'ex':
 	ni = 0
 	ne = 400
-	celltype = 'ex'
+	type = 'ex'
 	directory = 'excit_only'
 
 else:
 	ni = 100
 	ne = 0
-	celltype = 'in'
+	type = 'in'
 	directory = 'inh_only'
 
 dim1 = sys.argv[1]
@@ -69,6 +81,7 @@ trial = 0 # Todo: get all trials
 thres = 0 # Todo: variable thres
 tstart = 1000
 tstop = 1300
+binwidth = 1.
 
 print cmd
 
@@ -76,11 +89,7 @@ c.execute('CREATE TABLE IF NOT EXISTS t1 AS SELECT * FROM output '+cmd[0])
 c.execute('CREATE TABLE IF NOT EXISTS t2 AS SELECT * FROM t1 '+cmd[1])
 c.execute("CREATE TABLE IF NOT EXISTS subspace AS SELECT * FROM t2 WHERE \
 				dir=:directory AND ni=:ni AND ne=:ne AND type=:type AND trial=:trial AND thres=:thres",
-				{"directory":directory, "ni": ni, "ne": ne, "type": celltype, "trial": trial, "thres": thres})
-
-# Todo: there can be a problem when different parameter values for d1 or d2
-# were tested in a different context. (The data can add more distinct values
-# and mess up the table layout.) Planning to devise a workaround.
+				{"directory":directory, "ni": ni, "ne": ne, "type": type, "trial": trial, "thres": thres})
 
 ndim1=len(c.execute('SELECT DISTINCT '+dim1+' FROM subspace').fetchall())
 ndim2=len(c.execute('SELECT DISTINCT '+dim2+' FROM subspace').fetchall())
@@ -90,7 +99,7 @@ print '( dim1 =', dim1, ', dim2=', dim2, ')'
 print 'Reading file names...'
 flist = []
 tlist = []
-for distinctd1 in c.execute('SELECT DISTINCT '+dim1+' FROM subspace ORDER BY '+dim1+' ASC').fetchall():
+for distinctd1 in c.execute('SELECT DISTINCT '+dim1+' FROM subspace').fetchall():
 	ftemp = []
 	ttemp = []
 	for entry in c.execute('SELECT filename, '+dim1+', '+dim2+' FROM subspace WHERE '+dim1+'='+str(distinctd1[0])+' ORDER BY '+dim2+' DESC'):
@@ -115,32 +124,39 @@ print len(flist), len(flist[0])
 fig = plt.figure(num=1, figsize=(10, 7), dpi=100, facecolor='w', edgecolor='k')
 plt.rc('xtick', labelsize=5)
 plt.rc('ytick', labelsize=5)
+kappas = []
 for i in range(ndim1):
+	row = []
 	for j in range(ndim2):
-#		try
-			print i, j, "Load"
+		try:
+			print i, j, "Loading"
 			spikes = np.loadtxt(flist[i][j].encode('ascii','ignore'),dtype='float')
-			print spikes[0]
-			ax = fig.add_subplot(ndim2,ndim1,ndim1*j+i+1)
-			ax.scatter(spikes[:,1],spikes[:,0],s=1,c='k',marker='.')
-			ax.set_title(tlist[i][j],size='6')
-			if celltype=='ex': # Plot exc
-				ax.axis([tstart,tstop,0,50])			# Only recorded from 50 cells
-				ax.set_yticklabels([0,50])
-				ax.set_yticks([0,50])
-			else: # Plot inh
-				ax.axis([tstart,tstop,ne,ne+50])	# Only recorded from 50 cells
-				ax.set_yticklabels([ne,ne+50])
-				ax.set_yticks([ne,ne+50])
-			ax.set_xticklabels([tstart,tstart+(tstop-tstart)/5,tstart+(tstop-tstart)*2/5,tstart+(tstop-tstart)*3/5,tstart+(tstop-tstart)*4/5,tstop])
-			ax.set_xticks([tstart,tstart+(tstop-tstart)/5,tstart+(tstop-tstart)*2/5,tstart+(tstop-tstart)*3/5,tstart+(tstop-tstart)*4/5,tstop])
-			print i, j, str(flist[i][j])
-#		except:
-#			print i, j, "No file yet, or something wrong with loading or plotting"
-plt.suptitle(dim1+" vs "+dim2+" "+celltype+"("+directory+")")
-plt.tight_layout()
-plt.subplots_adjust(left=None, bottom=None, right=None, top=0.9)
-plt.savefig(dim1+'_'+dim2+'_'+celltype+'_'+directory+'.png')
-plt.show()
-# conn.commit()
+			print spikes[0], "<-first row"
+		except:
+			print i, j, "No file yet, or something wrong with loading"
+		k = km.kappa(spikes,binwidth)
+		c.execute('UPDATE output SET kappa=? WHERE filename=?', (k, flist[i][j]))
+		row.append(k)
+		print k
+	kappas.append(row)
+print kappas
+filename = dim1+dim2+".txt"
+np.savetxt(filename,kappas)
+print "Saved", np.shape(kappas), "kappa matrix to ./"+filename
+conn.commit()
 conn.close()
+print "Wrote kappas to DB"
+
+###
+
+kappas=np.loadtxt("phiiext.txt")
+fig = plt.figure()
+plt.pcolor(kappas.transpose())
+plt.yticks(np.arange(0,5,1)+0.5,(160,130,100,70,40))
+plt.ylabel('iext')
+plt.xticks(np.arange(0,5,1)+0.5,(0.6,1.0,1.7,2.9,5.0))
+plt.xlabel('phi')
+
+
+plt.colorbar()
+plt.show()

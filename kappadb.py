@@ -1,13 +1,12 @@
 # -*- coding: utf-8 -*-
-# Script to plot from a database of results.
+# Script to compute kappa from a database of spikes and to write the values to the database.
 # Adapted for the NEST simulation.
-# sample input: python plotdb.py d1 d2 type
+# sample input: python kappadb.py d1 d2 type
 # Y Yamamura Jan 29, 2014
 
 import sqlite3 as sql
 import sys
 import os
-import matplotlib.pyplot as plt
 import numpy as np
 import kappamat as km #Make sure kappamat.py is in the same directory as this
 
@@ -19,10 +18,17 @@ if not os.path.isfile('output.db'):
 conn = sql.connect('output.db')
 c = conn.cursor()
 
+testkappa = c.execute('PRAGMA index_info(kappa)')		   # Check for column kappa in output.db
+nokappa = testkappa.fetchall()
+print "kappa exists?", nokappa # Should be empty list if kappa doesn't exist yet
+if nokappa:
+	c.execute('ALTER TABLE output ADD COLUMN kappa real') # Add kappa column if it doesn't exist
+	print "Added new column kappa to output"
+
 # DB structure:
 # output (filename text PRIMARY KEY, thres int, 
 #				phi real, g real, iext real, ji real, jis real,
-#				ne int, ni int, msyn int, type text, trial int)
+#				ne int, ni int, msyn int, type text, trial int, kappa real)
 # Expected variables: phi, iext, ji, msyn
 
 # Plot by any two dimensions of the parameter space
@@ -102,8 +108,7 @@ for distinctd1 in c.execute('SELECT DISTINCT '+dim1+' FROM subspace').fetchall()
 	#print "d1:",distinctd1
 	#print "flist now:", flist
 	#print "tlist now:", tlist
-
-conn.close()	
+	
 #print "flist now:", flist
 print "tlist now:"
 for column in tlist:
@@ -127,6 +132,7 @@ for i in range(ndim1):
 		except:
 			print i, j, "No file yet, or something wrong with loading"
 		k = km.kappa(spikes,binwidth)
+		c.execute('UPDATE output SET kappa=? WHERE filename=?', (k, flist[i][j]))
 		row.append(k)
 		print k
 	kappas.append(row)
@@ -134,3 +140,6 @@ print kappas
 filename = dim1+dim2+".txt"
 np.savetxt(filename,kappas)
 print "Saved", np.shape(kappas), "kappa matrix to ./"+filename
+conn.commit()
+conn.close()
+print "Wrote kappas to DB"
