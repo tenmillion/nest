@@ -9,7 +9,7 @@ import re
 if not os.path.isfile('output.db'):
 	conn = sql.connect('output.db')
 	c = conn.cursor()
-	c.execute('''CREATE TABLE output (filename text PRIMARY KEY, dir text, thres int, phi real, g real, iext real, ji real, jis real, ne int, ni int, msyn int, type text, trial int, kappa real)''')
+	c.execute('''CREATE TABLE output (filename text PRIMARY KEY, dir text, thres int, phi real, iext real, ji real, je real, jis real, ni int, ne int, mi real, me real, type text, trial int, kappa real)''')
 	print "Created table"
 else:
 	conn = sql.connect('output.db')
@@ -29,30 +29,33 @@ for x in glob.glob('output/*/*/*.txt'):
 	dir_x = re.search('output/([a-z]+_?[a-z]*)/',x).group(1)			#
 	thres_x = re.search('T([0-9]+)mV',x).group(1)
 	phi_x = re.search('phi([0-9]+\.[0-9]+)',x).group(1)		#
-	g_x = re.search('g([0-9]+\.[0-9]+)',x).group(1)
 	iext_x = re.search('in([0-9]+\.[0-9]+)pA',x).group(1)	#
 	ji_x = re.search('JI\-([0-9]+\.[0-9]+)',x).group(1)			#
+	je_x = re.search('JE\-([0-9]+\.[0-9]+)',x).group(1)			#
 	jis_x = re.search('\+\-([0-9]+\.[0-9]+)',x).group(1)
-	ne_x = re.search('E([0-9]+)',x).group(1)						#
 	ni_x = re.search('I([0-9]+)',x).group(1)						#
-	msyn_x = re.search('MsynII([0-9]+)',x).group(1)			#
+	ne_x = re.search('E([0-9]+)',x).group(1)						#
+	mi_x = re.search('MsynI([0-9]+\.[0-9]+)',x).group(1)			#
+	me_x = re.search('MsynE([0-9]+\.[0-9]+)',x).group(1)			#
 	type_x = re.search('brunel\-py\-(ex|in)',x).group(1)		#
 	trial_x = re.search('([0-9]+)\.txt',x).group(1)				#
-	entry = [(x, dir_x, thres_x, phi_x, g_x, iext_x, ji_x, jis_x, ne_x, ni_x, msyn_x, type_x, trial_x),]
+	entry = [(x, dir_x, thres_x, phi_x, iext_x, ji_x, je_x, jis_x, ni_x, ne_x, mi_x, me_x, type_x, trial_x),]
 	#print entry
 	
 	# Check for existing entries with different file name but same params
-	c.execute('SELECT COUNT(*) FROM output WHERE dir=:dir AND thres=:thres AND phi=:phi AND g=:g AND iext=:iext AND ji=:ji AND\
-						jis=:jis AND ne=:ne AND ni=:ni AND msyn=:msyn AND type=:type AND trial=:trial',\
-						{"dir": dir_x, "thres":thres_x, "phi":phi_x, "g":g_x, "iext":iext_x, "ji":ji_x, "jis":jis_x, "ne":ne_x, "ni":ni_x, "msyn":msyn_x, "type":type_x, "trial":trial_x})
+	c.execute('SELECT COUNT(*) FROM output WHERE dir=:dir AND thres=:thres AND phi=:phi AND iext=:iext AND ji=:ji AND je=:je AND\
+						jis=:jis AND ni=:ni AND ne=:ne AND mi=:mi AND me=:me AND type=:type AND trial=:trial',\
+						{"dir": dir_x, "thres":thres_x, "phi":phi_x, "iext":iext_x, "ji":ji_x, "je":je_x, "jis":jis_x, "ni":ni_x, \
+						 "ne": ne_x, "mi":mi_x, "me":me_x, "type":type_x, "trial":trial_x})
 	count=c.fetchone()[0]
-	c.execute('SELECT * FROM output WHERE dir=:dir AND thres=:thres AND phi=:phi AND g=:g AND iext=:iext AND ji=:ji AND\
-	jis=:jis AND ne=:ne AND ni=:ni AND msyn=:msyn AND type=:type AND trial=:trial',\
-	{"dir": dir_x, "thres":thres_x, "phi":phi_x, "g":g_x, "iext":iext_x, "ji":ji_x, "jis":jis_x, "ne":ne_x, "ni":ni_x, "msyn":msyn_x, "type":type_x, "trial":trial_x})
+	c.execute('SELECT * FROM output WHERE dir=:dir AND thres=:thres AND phi=:phi AND iext=:iext AND ji=:ji AND je=:je AND\
+	jis=:jis AND ni=:ni AND ne=:ne AND mi=:mi AND me=:me AND type=:type AND trial=:trial',\
+	{"dir": dir_x, "thres":thres_x, "phi":phi_x, "iext":iext_x, "ji":ji_x, "je":je_x, "jis":jis_x, "ni":ni_x, \
+						 "ne": ne_x, "mi":mi_x, "me":me_x, "type":type_x, "trial":trial_x})
 	overlap=c.fetchall()
 	
 	if count==0:
-		c.executemany('INSERT INTO output VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,-1)', entry)
+		c.executemany('INSERT INTO output VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,-1)', entry)
 		nadded += 1
 	else:
 		print "Overlapping parameters", x
@@ -63,7 +66,7 @@ conn.commit()
 	
 # Print table just created, ordered
 #print "Entries now in table: "
-#for row in c.execute('SELECT * FROM output ORDER BY type, ne, ni, iext, ji, msyn, phi, trial, kappa'):
+#for row in c.execute('SELECT * FROM output ORDER BY type, ni, ne, iext, ji, je, mi, me, phi, trial, kappa'):
 #	print row
 	
 conn.close()

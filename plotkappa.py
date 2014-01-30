@@ -29,10 +29,10 @@ if nokappa:
 	exit()
 
 # DB structure:
-# output (filename text PRIMARY KEY, thres int, 
-#				phi real, g real, iext real, ji real, jis real,
-#				ne int, ni int, msyn int, type text, trial int, kappa real)
-# Expected variables: phi, iext, ji, msyn
+# CREATE TABLE output (filename text PRIMARY KEY, dir text, thres int,
+# phi real, iext real, ji real, je real, jis real, ni int, ne int,
+# mi real, me real, type text, trial int, kappa real)
+# Expected variables: phi, (iext), ji, je, mi, me
 
 # Plot by any two dimensions of the parameter space
 # Parameter range must be rectangular

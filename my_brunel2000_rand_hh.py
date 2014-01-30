@@ -4,7 +4,7 @@
 #
 # Temperature-enabled Hodgkin-Huxley network, based on Wang-Buzsaki 1996 and Brunel 2000.
 
-import NeuroTools.signals # Needs to load before nest, or python core dumps. Not sure why.
+#import NeuroTools.signals # Needs to load before nest, or python core dumps. Not sure why.
 #import NeuroTools.io # Needs latest version of NeuroTools downloaded thru svn
 import nest
 import nest.raster_plot
@@ -18,24 +18,26 @@ import os
 
 # Network parameters. Some of these are given in Brunel (2000) J.Comp.Neuro.
 phi	   = float(sys.argv[1])    # Default 1.
-g      = float(sys.argv[2])    # Ratio of IPSP to EPSP amplitude: J_I/J_E
-I_ext  = float(sys.argv[3])*100.  # Applied current in pA (default 1 uA/cm^2 = 100 pA)
-Is_ext = float(sys.argv[4])*100.  # SD of I_ext in pA (scaled by 100 from original uA/cm^2)
-J_I    = float(sys.argv[5])*(-1.) # Should be 0.1 mS/cm^2. Weight has units in pS in NEST? Area?
-M_syn_II = float(sys.argv[6])     # Mean synaptic inputs between inh neurons (default N_I) 
-J_range = 0.	# Range of synaptic weight (0 to 1)
+# g      = float(sys.argv[2])    # Ratio of IPSP to EPSP amplitude: J_I/J_E
+I_ext  = float(sys.argv[2])*100.  # Applied current in pA (default 1 uA/cm^2 = 100 pA)
+Is_ext = float(sys.argv[3])*100.  # SD of I_ext in pA (scaled by 100 from original uA/cm^2)
+J_I    = float(sys.argv[4])*(-1.) # 5.0 nS in NEST
+J_E    = float(sys.argv[5])		  # 2.0 nS in NEST
+M_syn_II = float(sys.argv[6])     # Probability of connection from inhibitory neuron to another neuron in % 
+M_syn_EE = float(sys.argv[7]) # Probability of connection from inhibitory neuron to another neuron in %
 
-N_E = int(sys.argv[7])
-N_I = int(sys.argv[8])
+N_E = int(sys.argv[8])
+N_I = int(sys.argv[9])
 
-M_syn_EE = M_syn_II*g # Average number of ex-ex syns, scales with pop ratio
 M_syn_EI = M_syn_EE
+M_syn_EI = M_syn_II*(M_syn_EE)/10.
 M_syn_IE = M_syn_II
 
 plotdistribs = False
 plotresults = True
 sortIext = True
 
+J_range = 0.	# Range of synaptic weight (0 to 1)
 V_init	= -60.	# Initial membrane potential
 V_range = 20.	# Range of initial membrane potential
 delay   = 1.5   # synaptic delay in ms
@@ -48,29 +50,29 @@ endtime = 1300.
 N_rec = 50    # Number of neurons to record from
 
 if N_E > 0:
- p_conn_EE = M_syn_EE/float(N_E) # Probability of a synapse existing between ex-ex
- p_conn_EI = M_syn_EI/float(N_E)
+ p_conn_EE = M_syn_EE/100. # Probability of a synapse existing between ex-ex
+ p_conn_EI = M_syn_EI/100.
 else:
  p_conn_EE = 0.
  p_conn_EI = 0.
 if N_I > 0:
- p_conn_IE = M_syn_IE/float(N_I)
- p_conn_II = M_syn_II/float(N_I)
+ p_conn_IE = M_syn_IE/100.
+ p_conn_II = M_syn_II/100.
 else:
  p_conn_IE = 0.
  p_conn_II = 0.
-
-J_E  = J_I/(-g)
 
 # Set parameters of the NEST simulation kernel
 nest.SetKernelStatus({"print_time": True,
                       "local_num_threads": 1})
 tdatetime = datetime.now()
+dirname = sys.argv[10]
+subdirname = sys.argv[11]
 tstr = tdatetime.strftime('_%m%d-%H%M-%S_')
-fnprefix = str('T%dmV'%thres)+str('phi%.1f'%phi)+str('g%.1f'%g)+str('in%.1fpA'%I_ext)+\
-		   str('_JI%.3f'%J_I)+str('+-%.1f_'%J_range)+\
-		   str('E%d'%N_E)+str('I%d'%N_I)+str('_MsynII%d'%M_syn_II)+tstr
-nest.SetKernelStatus({"data_path": "output/"+sys.argv[9]+"/"+sys.argv[10], "data_prefix": fnprefix})
+fnprefix = str('T%dmV'%thres)+str('phi%.3f'%phi)+str('in%.1fpA'%I_ext)+\
+		   str('_JI%.1f'%J_I)+str('_JE%.1f'%J_E)+str('+-%.1f_'%J_range)+\
+		   str('E%d'%N_E)+str('I%d'%N_I)+str('_MsynI%.1f'%M_syn_II)+str('_MsynE%.1f'%M_syn_EE)+tstr
+nest.SetKernelStatus({"data_path": "output/"+dirname+"/"+subdirname, "data_prefix": fnprefix})
 
 # Create and seed RNGs
 ms = 1000 # master seed
@@ -94,8 +96,8 @@ nest.SetDefaults("hh_cond_exp_traub", # Using Wang-Buzsaki
 				  "E_L": -65.,
 				  "E_ex": 0.,
 				  "E_in": -75., # var
-				  "tau_syn_ex": 10., # var
-				  "tau_syn_in": 10., # var
+				  "tau_syn_ex": 10., # var?
+				  "tau_syn_in": 10., # var?
 				  "V_T": thres, # var
                   "V_1": 35.0, 
                   "V_2": 60.0,
@@ -347,10 +349,10 @@ if plotresults:
  pylab.figure()
  if N_E>0:
   nest.voltage_trace.from_device(voltmeter_E)
-  pylab.savefig('./figures/'+sys.argv[9]+"/"+sys.argv[10]+"/"+fnprefix+'Vm_trace_E.eps')
+  pylab.savefig('./figures/'+dirname+"/"+subdirname+"/"+fnprefix+'Vm_trace_E.eps')
  if N_I>0:
   nest.voltage_trace.from_device(voltmeter_I)
-  pylab.savefig('./figures/'+sys.argv[9]+"/"+sys.argv[10]+"/"+fnprefix+'Vm_trace_I.eps')
+  pylab.savefig('./figures/'+dirname+"/"+subdirname+"/"+fnprefix+'Vm_trace_I.eps')
 #  nest.voltage_trace.show()
  
  if nest.NumProcesses() == 1:
@@ -359,13 +361,13 @@ if plotresults:
     nest.raster_plot.from_device(spikes_E, hist=True, title='Excitatory')
     #NeuroTools.signals.raster_plot(spikes_E, kwargs={'color':'b','marker':'.'})
     #pylab.title('Excitatory')
-    pylab.savefig('./figures/'+sys.argv[9]+"/"+sys.argv[10]+"/"+fnprefix+'raster_E.eps')
+    pylab.savefig('./figures/'+dirname+"/"+subdirname+"/"+fnprefix+'raster_E.eps')
    if N_I>0:
     #spiketrain_I = numpy.loadtxt(filename_I[0][0][:-3]+"txt")
     #pylab.title('Inhibitory')
     nest.raster_plot.from_device(spikes_I, hist=True, title='Inhibitory')
     #NeuroTools.signals.raster_plot(spikes_I, kwargs={'color':'g','marker':'.'})
-    pylab.savefig('./figures/'+sys.argv[9]+"/"+sys.argv[10]+"/"+fnprefix+'raster_I.eps')
+    pylab.savefig('./figures/'+dirname+"/"+subdirname+"/"+fnprefix+'raster_I.eps')
  else:
    print "Multiple MPI processes, skipping graphical output"
 # pylab.show()
