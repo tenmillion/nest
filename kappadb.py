@@ -117,10 +117,7 @@ for column in tlist:
 
 print len(flist), len(flist[0])
 	
-# Read from files and plot
-fig = plt.figure(num=1, figsize=(10, 7), dpi=100, facecolor='w', edgecolor='k')
-plt.rc('xtick', labelsize=5)
-plt.rc('ytick', labelsize=5)
+# Read from files and compute kappa
 kappas = []
 for i in range(ndim1):
 	row = []

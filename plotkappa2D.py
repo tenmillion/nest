@@ -26,7 +26,8 @@ testkappa = c.execute('PRAGMA index_info(kappa)')		   # Check for column kappa i
 nokappa = testkappa.fetchall()
 print nokappa # Should be empty list if kappa doesn't exist yet
 if nokappa:
-	c.execute('ALTER TABLE output ADD COLUMN kappa real') # Add kappa column if it doesn't exist
+	print "Please compute kappa first."
+	exit()
 
 # DB structure:
 # output (filename text PRIMARY KEY, thres int, 
@@ -46,19 +47,19 @@ c.execute('DROP TABLE IF EXISTS subspace')
 if sys.argv[3] == 'both':
 	ni = 100
 	ne = 400
-	type = 'in' # Todo: plot both in same fig
+	celltype = 'in' # Todo: plot both in same fig
 	directory = 'both'
 
 elif sys.argv[3] == 'ex':
 	ni = 0
 	ne = 400
-	type = 'ex'
+	celltype = 'ex'
 	directory = 'excit_only'
 
 else:
 	ni = 100
 	ne = 0
-	type = 'in'
+	celltype = 'in'
 	directory = 'inh_only'
 
 dim1 = sys.argv[1]
@@ -89,74 +90,44 @@ c.execute('CREATE TABLE IF NOT EXISTS t1 AS SELECT * FROM output '+cmd[0])
 c.execute('CREATE TABLE IF NOT EXISTS t2 AS SELECT * FROM t1 '+cmd[1])
 c.execute("CREATE TABLE IF NOT EXISTS subspace AS SELECT * FROM t2 WHERE \
 				dir=:directory AND ni=:ni AND ne=:ne AND type=:type AND trial=:trial AND thres=:thres",
-				{"directory":directory, "ni": ni, "ne": ne, "type": type, "trial": trial, "thres": thres})
+				{"directory":directory, "ni": ni, "ne": ne, "type": celltype, "trial": trial, "thres": thres})
 
-ndim1=len(c.execute('SELECT DISTINCT '+dim1+' FROM subspace').fetchall())
-ndim2=len(c.execute('SELECT DISTINCT '+dim2+' FROM subspace').fetchall())
-print 'Will generate', ndim1, 'by', ndim2, 'matrix of raster plots.'
-print '( dim1 =', dim1, ', dim2=', dim2, ')'
-
-print 'Reading file names...'
-flist = []
-tlist = []
-for distinctd1 in c.execute('SELECT DISTINCT '+dim1+' FROM subspace').fetchall():
-	ftemp = []
-	ttemp = []
-	for entry in c.execute('SELECT filename, '+dim1+', '+dim2+' FROM subspace WHERE '+dim1+'='+str(distinctd1[0])+' ORDER BY '+dim2+' DESC'):
-		ftemp.append(entry[0])
-		ttemp.append(dim1+'='+str(entry[1])+', '+dim2+'='+str(entry[2]))
-		#print "current entry:", entry
-	flist.append(ftemp)
-	tlist.append(ttemp)
-	#print "d1:",distinctd1
-	#print "flist now:", flist
-	#print "tlist now:", tlist
-	
-#print "flist now:", flist
-print "tlist now:"
-for column in tlist:
-	for tuple in column:
-		print tuple
-
-print len(flist), len(flist[0])
-	
-# Read from files and plot
-fig = plt.figure(num=1, figsize=(10, 7), dpi=100, facecolor='w', edgecolor='k')
-plt.rc('xtick', labelsize=5)
-plt.rc('ytick', labelsize=5)
+print 'Reading kappas...'
 kappas = []
-for i in range(ndim1):
-	row = []
-	for j in range(ndim2):
-		try:
-			print i, j, "Loading"
-			spikes = np.loadtxt(flist[i][j].encode('ascii','ignore'),dtype='float')
-			print spikes[0], "<-first row"
-		except:
-			print i, j, "No file yet, or something wrong with loading"
-		k = km.kappa(spikes,binwidth)
-		c.execute('UPDATE output SET kappa=? WHERE filename=?', (k, flist[i][j]))
-		row.append(k)
-		print k
-	kappas.append(row)
-print kappas
-filename = dim1+dim2+".txt"
-np.savetxt(filename,kappas)
-print "Saved", np.shape(kappas), "kappa matrix to ./"+filename
-conn.commit()
+d1s = c.execute('SELECT DISTINCT '+dim1+' FROM subspace ORDER BY '+dim1+' ASC').fetchall()
+d2s = c.execute('SELECT DISTINCT '+dim2+' FROM subspace ORDER BY '+dim2+' ASC').fetchall()
+print "Will plot", len(d1s), "by", len(d1s), "heat map of kappas"
+
+print dim1, d1s
+print dim2, d2s
+
+for d1 in d1s:
+	ktemp = []
+	for d2 in d2s:
+		entry = c.execute('SELECT kappa, '+dim1+', '+dim2+' FROM subspace WHERE '+dim1+'=? AND '+dim2+'=? \
+							ORDER BY trial DESC',(d1[0],d2[0])).fetchall()
+		print len(entry), "trial(s) found for", dim1, d1[0], dim2, d2[0]
+		ktemp.append(np.mean(entry))
+	kappas.append(ktemp)
 conn.close()
-print "Wrote kappas to DB"
+npkappas = np.array(kappas)
+
+#fig = plt.figure(num=1, figsize=(10, 7), dpi=100, facecolor='w', edgecolor='k')
+#plt.rc('xtick', labelsize=5)
+#plt.rc('ytick', labelsize=5)
+
+print "Kappas averaged over trials:"
+print npkappas
 
 ###
 
-kappas=np.loadtxt("phiiext.txt")
 fig = plt.figure()
-plt.pcolor(kappas.transpose())
-plt.yticks(np.arange(0,5,1)+0.5,(160,130,100,70,40))
-plt.ylabel('iext')
-plt.xticks(np.arange(0,5,1)+0.5,(0.6,1.0,1.7,2.9,5.0))
-plt.xlabel('phi')
-
+plt.title(dim1+" vs "+dim2+" "+celltype+"("+directory+")")
+plt.pcolor(npkappas)
+plt.yticks(np.arange(0,len(d2s),1)+0.5,np.array(d1s)[:,0])
+plt.ylabel(dim1)
+plt.xticks(np.arange(0,len(d1s),1)+0.5,np.array(d2s)[:,0])
+plt.xlabel(dim2)
 
 plt.colorbar()
 plt.show()
