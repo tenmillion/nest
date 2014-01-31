@@ -123,7 +123,7 @@ print len(flist), len(flist[0])
 print flist[0],flist[1]
 	
 # Read from files and plot
-fig = plt.figure(num=1, figsize=(12, 10), dpi=100, facecolor='w', edgecolor='k')
+fig = plt.figure(num=1, figsize=(20, 10), dpi=100, facecolor='w', edgecolor='k')
 plt.rc('xtick', labelsize=5)
 plt.rc('ytick', labelsize=5)
 for i in range(ndim1):

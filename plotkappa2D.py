@@ -16,6 +16,8 @@ from pylab import *
 if not os.path.isfile('output.db'):
 	print 'No output.db found in ./'
 	exit()
+
+thres = 0 # Todo: variable thres
 	
 conn = sql.connect('output.db')
 c = conn.cursor()
@@ -50,8 +52,6 @@ else:
 	ne = 0
 	celltype = 'in'
 	directory = 'inh_only'
-
-thres = 0 # Todo: variable thres
 
 dim1 = sys.argv[1]
 dim2 = sys.argv[2]
@@ -131,6 +131,10 @@ if len(sys.argv)>5:
 else:
 	print "Kappas averaged over trials:"
 print npkappas
+if thres >0:
+	np.savetxt("lowphi_"+dim1+"_"+dim2+"_"+str(sys.argv[3])+".txt",npkappas)
+else:
+	np.savetxt("allphi_"+dim1+"_"+dim2+"_"+str(sys.argv[3])+".txt",npkappas)	
 
 ###
 
@@ -151,4 +155,4 @@ if len(sys.argv)>5:
 	savefig("figures/"+"heatmap_FREQ_"+dim1+"_"+dim2+'_'+str(sys.argv[3])+"_"+directory+"_"+celltype+".png", facecolor='w')
 else:
 	savefig("figures/"+"heatmap_"+dim1+"_"+dim2+'_'+str(sys.argv[3])+"_"+directory+"_"+celltype+".png", facecolor='w')
-show()
+#show()
