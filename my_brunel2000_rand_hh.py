@@ -23,14 +23,13 @@ I_ext  = float(sys.argv[2])*100.  # Applied current in pA (default 1 uA/cm^2 = 1
 Is_ext = float(sys.argv[3])*100.  # SD of I_ext in pA (scaled by 100 from original uA/cm^2)
 J_I    = float(sys.argv[4])*(-1.) # 5.0 nS in NEST
 J_E    = float(sys.argv[5])		  # 2.0 nS in NEST
-M_syn_II = float(sys.argv[6])     # Probability of connection from inhibitory neuron to another neuron in % 
-M_syn_EE = float(sys.argv[7]) # Probability of connection from inhibitory neuron to another neuron in %
+M_syn_II = float(sys.argv[6])     # Mean number of connections from inhibitory neuron to another neuron per 100 neurons 
+M_syn_EE = float(sys.argv[7])	  # Mean number of connections from inhibitory neuron to another neuron per 100 neurons
 
 N_I = int(sys.argv[8])
 N_E = int(sys.argv[9])
 
-M_syn_EI = M_syn_EE
-M_syn_EI = M_syn_II*(M_syn_EE)/10.
+M_syn_EI = M_syn_II
 M_syn_IE = M_syn_II
 
 plotdistribs = False
@@ -65,7 +64,7 @@ else:
 
 # Set parameters of the NEST simulation kernel
 nest.SetKernelStatus({"print_time": True,
-                      "local_num_threads": 1})
+                      "local_num_threads": 10})
 tdatetime = datetime.now()
 dirname = sys.argv[10]
 subdirname = sys.argv[11]
