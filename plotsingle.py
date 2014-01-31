@@ -4,7 +4,7 @@ import glob
 import re
 
 #filename = glob.glob('output/*/*/*.txt')[0]
-filename = 'output/inh_only/MI_JI_phi/T0mVphi1.340in100.0pA_JI-0.6_JE2.0+-0.0_E0I100_MsynI100.0_MsynE10.0_0131-2323-22_brunel-py-in-101-0.txt'
+filename = '/home/yoriko-y/Dropbox/Academic/NAIST_MI/Cool/_MODELS/Nest/output/inh_only/MI_JI_phi/T35mVphi0.360in100.0pA_JI-2.1_JE2.0+-0.0_E0I100_MsynI30.0_MsynE10.0_0201-0152-10_brunel-py-in-101-0.txt'
 spikes = np.loadtxt(filename,dtype='float')
 
 print spikes[:,0].tolist()

@@ -48,7 +48,7 @@ else:
 	celltype = 'in'
 	directory = 'inh_only'
 
-thres = 0 # Todo: variable thres
+thres = 35 # Todo: variable thres
 
 dim1 = sys.argv[1]
 dim2 = sys.argv[2]
@@ -102,7 +102,7 @@ for distinctd1 in c.execute('SELECT DISTINCT '+dim1+' FROM subspace ORDER BY '+d
 	ttemp = []
 	print np.mod(countf,plotevery), countf
 	if np.mod(countf,plotevery)==0:	
-		for entry in c.execute('SELECT filename, '+dim1+', '+dim2+' FROM subspace WHERE trial=0 AND '+dim1+'='+str(distinctd1[0])+' ORDER BY '+dim2+' DESC'):
+		for entry in c.execute('SELECT filename, '+dim1+', '+dim2+' FROM subspace WHERE '+dim1+'='+str(distinctd1[0])+' ORDER BY '+dim2+' DESC'):
 			ftemp.append(entry[0])
 			ttemp.append(dim1[:1]+'='+str(entry[1])+', '+dim2[:1]+'='+str(entry[2]))
 			#print "current entry:", entry
@@ -123,7 +123,7 @@ print len(flist), len(flist[0])
 print flist[0],flist[1]
 	
 # Read from files and plot
-fig = plt.figure(num=1, figsize=(20, 10), dpi=100, facecolor='w', edgecolor='k')
+fig = plt.figure(num=1, figsize=(12, 10), dpi=100, facecolor='w', edgecolor='k')
 plt.rc('xtick', labelsize=5)
 plt.rc('ytick', labelsize=5)
 for i in range(ndim1):
