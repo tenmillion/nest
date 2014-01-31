@@ -46,6 +46,7 @@ thres = 0.	# Threshold of spike detection?
 
 N_neurons = N_E+N_I
 starttime = 0.
+starttime_v = 1000.
 endtime = 1300.
 N_rec = 50    # Number of neurons to record from
 
@@ -265,7 +266,7 @@ if N_E > 0:
  					"withgid": True, "to_file": True, "start":starttime}])                   
  nest.ConvergentConnect(nodes_E[:N_rec],spikes_E)
  voltmeter_E = nest.Create("voltmeter")
- nest.SetStatus(voltmeter_E,[{"to_file": True, "withtime": True, "withgid": True, "start":starttime}])
+ nest.SetStatus(voltmeter_E,[{"to_file": True, "withtime": True, "withgid": True, "start":starttime_v}])
  nest.Connect(voltmeter_E, nodes_E[1:2])
 
 if N_I > 0:
@@ -275,7 +276,7 @@ if N_I > 0:
  nest.ConvergentConnect(nodes_I[:N_rec],spikes_I)
 
  voltmeter_I = nest.Create("voltmeter")
- nest.SetStatus(voltmeter_I,[{"to_file": True, "withtime": True, "withgid": True, "start":starttime}])
+ nest.SetStatus(voltmeter_I,[{"to_file": True, "withtime": True, "withgid": True, "start":starttime_v}])
  nest.Connect(voltmeter_I, nodes_I[1:2])
 
 # Visualization of initial membrane potential and initial weight
@@ -349,10 +350,10 @@ if plotresults:
  pylab.figure()
  if N_E>0:
   nest.voltage_trace.from_device(voltmeter_E)
-  pylab.savefig('./figures/'+dirname+"/"+subdirname+"/"+fnprefix+'Vm_trace_E.eps')
+  pylab.savefig('./figures/'+dirname+"/"+subdirname+"/"+fnprefix+'Vm_trace_E.png')
  if N_I>0:
   nest.voltage_trace.from_device(voltmeter_I)
-  pylab.savefig('./figures/'+dirname+"/"+subdirname+"/"+fnprefix+'Vm_trace_I.eps')
+  pylab.savefig('./figures/'+dirname+"/"+subdirname+"/"+fnprefix+'Vm_trace_I.png')
 #  nest.voltage_trace.show()
  
  if nest.NumProcesses() == 1:
@@ -361,13 +362,13 @@ if plotresults:
     nest.raster_plot.from_device(spikes_E, hist=True, title='Excitatory')
     #NeuroTools.signals.raster_plot(spikes_E, kwargs={'color':'b','marker':'.'})
     #pylab.title('Excitatory')
-    pylab.savefig('./figures/'+dirname+"/"+subdirname+"/"+fnprefix+'raster_E.eps')
+    pylab.savefig('./figures/'+dirname+"/"+subdirname+"/"+fnprefix+'raster_E.png')
    if N_I>0:
     #spiketrain_I = numpy.loadtxt(filename_I[0][0][:-3]+"txt")
     #pylab.title('Inhibitory')
     nest.raster_plot.from_device(spikes_I, hist=True, title='Inhibitory')
     #NeuroTools.signals.raster_plot(spikes_I, kwargs={'color':'g','marker':'.'})
-    pylab.savefig('./figures/'+dirname+"/"+subdirname+"/"+fnprefix+'raster_I.eps')
+    pylab.savefig('./figures/'+dirname+"/"+subdirname+"/"+fnprefix+'raster_I.png')
  else:
    print "Multiple MPI processes, skipping graphical output"
 # pylab.show()
