@@ -15,13 +15,18 @@ import numpy
 
 def sort_spikes(spikes):
 	spikes_tr=numpy.transpose(spikes)
-	mincell=numpy.int(min(spikes_tr[0]))
-	maxcell=numpy.int(max(spikes_tr[0])+1)
-	sorted_spiketrains = []
-	for cell in range(mincell,maxcell):
-	  locs = (numpy.where(spikes_tr[0] == cell+1))[0] #where returns tuple
-	  sorted_spiketrains.append(spikes_tr[1,locs])
-	return sorted_spiketrains
+	if spikes_tr.shape[0] > 0:
+		flag = 0
+		mincell=numpy.int(min(spikes_tr[0]))
+		maxcell=numpy.int(max(spikes_tr[0])+1)
+		sorted_spiketrains = []
+		for cell in range(mincell,maxcell):
+		  locs = (numpy.where(spikes_tr[0] == cell+1))[0] #where returns tuple
+		  sorted_spiketrains.append(spikes_tr[1,locs])
+		return sorted_spiketrains, flag
+	else:
+		flag = 1
+		return spikes_tr, flag
 
 def pairwise_kappa(s1, s2, binwidth, tstart, tstop): # expects numpy arrays
 	w1 = s1[numpy.where((s1 >= tstart) & (s1 <= tstop))] # Windowed s1
@@ -34,13 +39,13 @@ def pairwise_kappa(s1, s2, binwidth, tstart, tstop): # expects numpy arrays
 	return overlaps
 	
 # Somehow when I import functions the array[i][j] syntax doesn't work even for numpy arrays
-def kappamat(sorted, binwidth, tstart, tstop):
+def kappamat(sortedsps, binwidth, tstart, tstop):
 	xymat = []
-	for s1 in range(len(sorted)):
+	for s1 in range(len(sortedsps)):
 		row = []
-		st1=sorted[s1]
-		for s2 in range(len(sorted)):
-			st2=sorted[s2]
+		st1=sortedsps[s1]
+		for s2 in range(len(sortedsps)):
+			st2=sortedsps[s2]
 			if ((len(st1)!=0) and (len(st2)!=0)):
 				row.append(pairwise_kappa(st1, st2, binwidth, tstart, tstop)) # not normalized
 			else:
@@ -62,10 +67,13 @@ def normalize_kappa(kmat):
 	return normalized.tolist()
 	
 def kappa(spikes, binwidth, tstart, tstop): # Returns normalized kappa for entire set of spike trains
-	sorted = sort_spikes(spikes)
-	kmat=kappamat(sorted, binwidth, tstart, tstop)
-	nkmat = normalize_kappa(kmat)
-#	k=numpy.mean(nkmat) # Count empty spike trains too
-	npnkmat = numpy.array(nkmat)
-	k=numpy.mean(npnkmat[numpy.nonzero(npnkmat)])
+	sortedsps, flag = sort_spikes(spikes)
+	if flag == 0:
+		kmat=kappamat(sortedsps, binwidth, tstart, tstop)
+		nkmat = normalize_kappa(kmat)
+	#	k=numpy.mean(nkmat) # Count empty spike trains too
+		npnkmat = numpy.array(nkmat)
+		k=numpy.mean(npnkmat[numpy.nonzero(npnkmat)])
+	else:
+		k=-1
 	return k

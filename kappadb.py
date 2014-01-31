@@ -63,13 +63,13 @@ if (dim1 != 'iext') and (dim2 != 'iext'):
 	iext = 100.
 	cmd+=' iext='+str(iext)+' AND'
 if (dim1 != 'ji') and (dim2 != 'ji'):
-	ji = float(argv[3])
+	ji = float(sys.argv[3])
 	cmd+=' ji='+str(ji)+' AND'
 if (dim1 != 'je') and (dim2 != 'je'):
 	je = 2.
 	cmd+=' je='+str(je)+' AND'
 if (dim1 != 'mi') and (dim2 != 'mi'):
-	mi = float(argv[3])
+	mi = float(sys.argv[3])
 	cmd+=' mi='+str(mi)+' AND'
 if (dim1 != 'me') and (dim2 != 'me'):
 	me = 10.
@@ -110,12 +110,12 @@ for distinctd1 in c.execute('SELECT DISTINCT '+dim1+' FROM subspace').fetchall()
 	#print "tlist now:", tlist
 	
 #print "flist now:", flist
-print "tlist now:"
-for column in tlist:
-	for tuple in column:
-		print tuple
+#print "tlist now:"
+#for column in tlist:
+#	for tuple in column:
+#		print tuple
 
-print len(flist), len(flist[0])
+print "the file list length:", len(flist), len(flist[0])
 	
 # Read from files and compute kappa
 kappas = []
