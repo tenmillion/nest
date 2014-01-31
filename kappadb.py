@@ -95,50 +95,41 @@ print '( dim1 =', dim1, ', dim2=', dim2, ')'
 
 print 'Reading file names...'
 flist = []
-tlist = []
 for distinctd1 in c.execute('SELECT DISTINCT '+dim1+' FROM subspace').fetchall():
 	ftemp = []
-	ttemp = []
-	for entry in c.execute('SELECT filename, '+dim1+', '+dim2+' FROM subspace WHERE '+dim1+'='+str(distinctd1[0])+' ORDER BY '+dim2+' DESC'):
-		ftemp.append(entry[0])
-		ttemp.append(dim1+'='+str(entry[1])+', '+dim2+'='+str(entry[2]))
-		#print "current entry:", entry
+	for distinctd2 in c.execute('SELECT DISTINCT '+dim2+' FROM subspace').fetchall():
+		ftemp2=[]
+		entries = c.execute('SELECT filename, trial FROM subspace WHERE '+dim1+'='+str(distinctd1[0])+\
+							' AND '+dim2+'='+str(distinctd2[0])+' ORDER BY trial DESC').fetchall()
+		print "found", len(entries), "trials"
+		for entry in entries:
+			ftemp2.append(entry[0])
+			#print "current trial:", entry[1]
+		ftemp.append(ftemp2)
 	flist.append(ftemp)
-	tlist.append(ttemp)
-	#print "d1:",distinctd1
-	#print "flist now:", flist
-	#print "tlist now:", tlist
+		#print "d1:",distinctd1
+		#print "flist now:", flist
 	
-#print "flist now:", flist
-#print "tlist now:"
-#for column in tlist:
-#	for tuple in column:
-#		print tuple
-
-print "the file list length:", len(flist), len(flist[0])
+print "the file list size:", np.array(flist).shape
 	
 # Read from files and compute kappa
-kappas = []
+counter = 0
 for i in range(ndim1):
 	row = []
 	for j in range(ndim2):
-		try:
-			print i, j, "Loading"
-			spikes = np.loadtxt(flist[i][j].encode('ascii','ignore'),dtype='float')
-			print spikes[0], "<-first row"
-		except:
-			print i, j, "No file yet, or something wrong with loading"
-		k = km.kappa(spikes,binwidth,tstart,tstop)
-		if (k is None) or math.isnan(k):
-			k=-1
-		c.execute('UPDATE output SET kappa=? WHERE filename=?', (k, flist[i][j]))
-		row.append(k)
-		print k
-	kappas.append(row)
-print kappas
-outfilename = dim1+"_"+dim2+".txt"
-np.savetxt('figures/'+outfilename,kappas)
-print "Saved", np.shape(kappas), "kappa matrix to figures/"+outfilename
+		for trial in range(len(flist[i][j])):
+			try:
+				print i, j, trial, "Loading"
+				spikes = np.loadtxt(flist[i][j][trial].encode('ascii','ignore'),dtype='float')
+				#print spikes[0], "<-first row"
+			except:
+				print i, j, trial, "No file yet, or something wrong with loading"
+				spikes = []
+				print spikes
+			k = km.kappa(spikes,binwidth,tstart,tstop)
+			c.execute('UPDATE output SET kappa=? WHERE filename=?', (k, flist[i][j][trial]))
+			#print k
+			counter += 1
 conn.commit()
 conn.close()
-print "Wrote kappas to DB"
+print "Wrote", counter, "kappas to DB"

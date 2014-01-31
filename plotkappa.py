@@ -34,13 +34,13 @@ print 'Creating 2D supspace...'
 c.execute('DROP TABLE IF EXISTS t1')
 c.execute('DROP TABLE IF EXISTS subspace')
 
-if sys.argv[3] == 'both':
+if sys.argv[4] == 'both':
 	ni = 100
 	ne = 400
 	celltype = 'in' # Todo: plot both in same fig
 	directory = 'both'
 
-elif sys.argv[3] == 'ex':
+elif sys.argv[4] == 'ex':
 	ni = 0
 	ne = 400
 	celltype = 'ex'
@@ -65,13 +65,13 @@ if (dim1 != 'iext') and (dim2 != 'iext'):
 	iext = 100.
 	cmd+=' iext='+str(iext)+' AND'
 if (dim1 != 'ji') and (dim2 != 'ji'):
-	ji = 5.
+	ji = float(sys.argv[3])
 	cmd+=' ji='+str(ji)+' AND'
 if (dim1 != 'je') and (dim2 != 'je'):
 	je = 2.
 	cmd+=' je='+str(je)+' AND'
 if (dim1 != 'mi') and (dim2 != 'mi'):
-	mi = 25.
+	mi = float(sys.argv[3])
 	cmd+=' mi='+str(mi)+' AND'
 if (dim1 != 'me') and (dim2 != 'me'):
 	me = 10.
@@ -89,6 +89,7 @@ c.execute("CREATE TABLE IF NOT EXISTS subspace AS SELECT * FROM t1 WHERE \
 				dir=:directory AND ni=:ni AND ne=:ne AND type=:type",
 				{"directory":directory, "ni": ni, "ne": ne, "type": celltype})
 ## If params are modified, modify down to here.
+
 
 print 'Reading kappas...'
 kappas = []

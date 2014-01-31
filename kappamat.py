@@ -15,7 +15,7 @@ import numpy
 
 def sort_spikes(spikes):
 	spikes_tr=numpy.transpose(spikes)
-	if spikes_tr.shape[0] > 0:
+	if len(spikes_tr.shape) > 1:
 		flag = 0
 		mincell=numpy.int(min(spikes_tr[0]))
 		maxcell=numpy.int(max(spikes_tr[0])+1)

@@ -30,13 +30,13 @@ print 'Creating 2D supspace...'
 c.execute('DROP TABLE IF EXISTS t1')
 c.execute('DROP TABLE IF EXISTS subspace')
 
-if sys.argv[3] == 'both':
+if sys.argv[4] == 'both':
 	ni = 100
 	ne = 400
 	celltype = 'in' # Todo: plot both in same fig
 	directory = 'both'
 
-elif sys.argv[3] == 'ex':
+elif sys.argv[4] == 'ex':
 	ni = 0
 	ne = 400
 	celltype = 'ex'
@@ -50,7 +50,7 @@ else:
 
 thres = 0 # Todo: variable thres
 
-dim1 = sys.argv[2]	# The rest take args in reverse order
+dim1 = sys.argv[2]
 dim2 = sys.argv[1]
 
 cmd = 'WHERE'
@@ -61,13 +61,13 @@ if (dim1 != 'iext') and (dim2 != 'iext'):
 	iext = 100.
 	cmd+=' iext='+str(iext)+' AND'
 if (dim1 != 'ji') and (dim2 != 'ji'):
-	ji = 5.
+	ji = float(sys.argv[3])
 	cmd+=' ji='+str(ji)+' AND'
 if (dim1 != 'je') and (dim2 != 'je'):
 	je = 2.
 	cmd+=' je='+str(je)+' AND'
 if (dim1 != 'mi') and (dim2 != 'mi'):
-	mi = 25.
+	mi = float(sys.argv[3])
 	cmd+=' mi='+str(mi)+' AND'
 if (dim1 != 'me') and (dim2 != 'me'):
 	me = 10.
@@ -86,6 +86,7 @@ c.execute("CREATE TABLE IF NOT EXISTS subspace AS SELECT * FROM t1 WHERE \
 				{"directory":directory, "ni": ni, "ne": ne, "type": celltype})
 ## If params are modified, modify down to here.
 
+
 ndim1=len(c.execute('SELECT DISTINCT '+dim1+' FROM subspace').fetchall())
 ndim2=len(c.execute('SELECT DISTINCT '+dim2+' FROM subspace').fetchall())
 print 'Will generate', ndim1, 'by', ndim2, 'matrix of raster plots.'
@@ -97,7 +98,7 @@ tlist = []
 for distinctd1 in c.execute('SELECT DISTINCT '+dim1+' FROM subspace ORDER BY '+dim1+' ASC').fetchall():
 	ftemp = []
 	ttemp = []
-	for entry in c.execute('SELECT filename, '+dim1+', '+dim2+' FROM subspace WHERE '+dim1+'='+str(distinctd1[0])+' ORDER BY '+dim2+' DESC'):
+	for entry in c.execute('SELECT filename, '+dim1+', '+dim2+' FROM subspace WHERE trial=00 AND '+dim1+'='+str(distinctd1[0])+' ORDER BY '+dim2+' DESC'):
 		ftemp.append(entry[0])
 		ttemp.append(dim1[:1]+'='+str(entry[1])+', '+dim2[:1]+'='+str(entry[2]))
 		#print "current entry:", entry
@@ -121,9 +122,9 @@ plt.rc('xtick', labelsize=5)
 plt.rc('ytick', labelsize=5)
 for i in range(ndim1):
 	for j in range(ndim2):
-#		try
-			print i, j, "Load"
-			spikes = np.loadtxt(flist[i][j].encode('ascii','ignore'),dtype='float')
+		print i, j, "Loading"
+		spikes = np.loadtxt(flist[i][j].encode('ascii','ignore'),dtype='float')
+		if len(spikes.shape) > 1:
 			print spikes[0]
 			ax = fig.add_subplot(ndim2,ndim1,ndim1*j+i+1)
 			ax.scatter(spikes[:,1],spikes[:,0],s=1,c='k',marker='.')
@@ -139,12 +140,12 @@ for i in range(ndim1):
 			ax.set_xticklabels([])
 			ax.set_xticks([tstart,tstart+(tstop-tstart)/5,tstart+(tstop-tstart)*2/5,tstart+(tstop-tstart)*3/5,tstart+(tstop-tstart)*4/5,tstop])
 			print i, j, str(flist[i][j])
-#		except:
-#			print i, j, "No file yet, or something wrong with loading or plotting"
-plt.suptitle(dim2+" vs "+dim1+" "+celltype+"("+directory+")")
+		else:
+			print i, j, "No spikes:", spikes
+plt.suptitle(dim2+" vs "+dim1+", other dim value:"+str(sys.argv[3])+' type:'+celltype+"("+directory+")")
 plt.tight_layout()
 plt.subplots_adjust(left=None, bottom=None, right=None, top=0.9)
-plt.savefig('figures/'+dim2+'_'+dim1+'_'+celltype+'_'+directory+'.png')
+plt.savefig('figures/'+dim2+'_'+dim1+'_'+str(sys.argv[3])+'_'+celltype+'_'+directory+'.png')
 plt.show()
 # conn.commit()
 conn.close()
