@@ -50,7 +50,7 @@ print >>fh, "mkdir figures/"+direc+"/"+subdir
 for Jn in range(len(JI)):
  for MM in MI:
   for PP in phi:
-   print >>fh, makecommand(direc,subdir,PP,Iext,JI[Jn],je,mi,me,NI,NE)
+   print >>fh, makecommand(direc,subdir,PP,Iext,JI[Jn],je,MM,me,NI,NE)
    lines += 1
  fh.close()
  print "Generated shell script", direc+"_"+subdir+"_JI="+str(JI[Jn])+".sh with", lines, "lines"
