@@ -64,7 +64,7 @@ else:
 
 # Set parameters of the NEST simulation kernel
 nest.SetKernelStatus({"print_time": True,
-                      "local_num_threads": 10})
+                      "local_num_threads": 1})
 tdatetime = datetime.now()
 dirname = sys.argv[10]
 subdirname = sys.argv[11]

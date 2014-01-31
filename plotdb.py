@@ -50,8 +50,8 @@ else:
 
 thres = 0 # Todo: variable thres
 
-dim1 = sys.argv[2]
-dim2 = sys.argv[1]
+dim1 = sys.argv[1]
+dim2 = sys.argv[2]
 
 cmd = 'WHERE'
 if (dim1 != 'phi') and (dim2 != 'phi'):
@@ -74,7 +74,7 @@ if (dim1 != 'me') and (dim2 != 'me'):
 	cmd+=' me='+str(me)+' AND'
 cmd+=' thres='+str(thres)
 
-tstart = 1000
+tstart = 0
 tstop = 1300
 binwidth = 1.
 
@@ -86,8 +86,9 @@ c.execute("CREATE TABLE IF NOT EXISTS subspace AS SELECT * FROM t1 WHERE \
 				{"directory":directory, "ni": ni, "ne": ne, "type": celltype})
 ## If params are modified, modify down to here.
 
+plotevery = 2
 
-ndim1=len(c.execute('SELECT DISTINCT '+dim1+' FROM subspace').fetchall())
+ndim1=len(c.execute('SELECT DISTINCT '+dim1+' FROM subspace').fetchall())/plotevery
 ndim2=len(c.execute('SELECT DISTINCT '+dim2+' FROM subspace').fetchall())
 print 'Will generate', ndim1, 'by', ndim2, 'matrix of raster plots.'
 print '( dim1 =', dim1, ', dim2=', dim2, ')'
@@ -95,19 +96,23 @@ print '( dim1 =', dim1, ', dim2=', dim2, ')'
 print 'Reading file names...'
 flist = []
 tlist = []
-for distinctd1 in c.execute('SELECT DISTINCT '+dim1+' FROM subspace ORDER BY '+dim1+' ASC').fetchall():
+countf = 0
+for distinctd1 in c.execute('SELECT DISTINCT '+dim1+' FROM subspace ORDER BY '+dim1+' DESC').fetchall():
 	ftemp = []
 	ttemp = []
-	for entry in c.execute('SELECT filename, '+dim1+', '+dim2+' FROM subspace WHERE trial=00 AND '+dim1+'='+str(distinctd1[0])+' ORDER BY '+dim2+' DESC'):
-		ftemp.append(entry[0])
-		ttemp.append(dim1[:1]+'='+str(entry[1])+', '+dim2[:1]+'='+str(entry[2]))
-		#print "current entry:", entry
-	flist.append(ftemp)
-	tlist.append(ttemp)
-	#print "d1:",distinctd1
-	#print "flist now:", flist
-	#print "tlist now:", tlist
-	
+	print np.mod(countf,plotevery), countf
+	if np.mod(countf,plotevery)==0:	
+		for entry in c.execute('SELECT filename, '+dim1+', '+dim2+' FROM subspace WHERE trial=1 AND '+dim1+'='+str(distinctd1[0])+' ORDER BY '+dim2+' DESC'):
+			ftemp.append(entry[0])
+			ttemp.append(dim1[:1]+'='+str(entry[1])+', '+dim2[:1]+'='+str(entry[2]))
+			#print "current entry:", entry
+		flist.append(ftemp)
+		tlist.append(ttemp)
+		#print "d1:",distinctd1
+		#print "flist now:", flist
+		#print "tlist now:", tlist
+	countf += 1
+
 #print "flist now:", flist
 print "tlist now:"
 for column in tlist:
@@ -124,9 +129,12 @@ for i in range(ndim1):
 	for j in range(ndim2):
 		print i, j, "Loading"
 		spikes = np.loadtxt(flist[i][j].encode('ascii','ignore'),dtype='float')
+		print str(flist[i][j])
+		print tlist[i][j]
+		print spikes.shape
 		if len(spikes.shape) > 1:
 			print spikes[0]
-			ax = fig.add_subplot(ndim2,ndim1,ndim1*j+i+1)
+			ax = fig.add_subplot(ndim1,ndim2,ndim2*(i+1)-j)
 			ax.scatter(spikes[:,1],spikes[:,0],s=1,c='k',marker='.')
 			ax.set_title(tlist[i][j],size='6')
 			if celltype=='ex': # Plot exc
@@ -139,7 +147,6 @@ for i in range(ndim1):
 				ax.set_yticks([ne,ne+50])
 			ax.set_xticklabels([])
 			ax.set_xticks([tstart,tstart+(tstop-tstart)/5,tstart+(tstop-tstart)*2/5,tstart+(tstop-tstart)*3/5,tstart+(tstop-tstart)*4/5,tstop])
-			print i, j, str(flist[i][j])
 		else:
 			print i, j, "No spikes:", spikes
 plt.suptitle(dim2+" vs "+dim1+", other dim value:"+str(sys.argv[3])+' type:'+celltype+"("+directory+")")
