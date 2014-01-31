@@ -86,7 +86,7 @@ c.execute("CREATE TABLE IF NOT EXISTS subspace AS SELECT * FROM t1 WHERE \
 				{"directory":directory, "ni": ni, "ne": ne, "type": celltype})
 ## If params are modified, modify down to here.
 
-plotevery = 2
+plotevery = 1
 
 ndim1=len(c.execute('SELECT DISTINCT '+dim1+' FROM subspace').fetchall())/plotevery
 ndim2=len(c.execute('SELECT DISTINCT '+dim2+' FROM subspace').fetchall())
@@ -102,7 +102,7 @@ for distinctd1 in c.execute('SELECT DISTINCT '+dim1+' FROM subspace ORDER BY '+d
 	ttemp = []
 	print np.mod(countf,plotevery), countf
 	if np.mod(countf,plotevery)==0:	
-		for entry in c.execute('SELECT filename, '+dim1+', '+dim2+' FROM subspace WHERE trial=1 AND '+dim1+'='+str(distinctd1[0])+' ORDER BY '+dim2+' DESC'):
+		for entry in c.execute('SELECT filename, '+dim1+', '+dim2+' FROM subspace WHERE trial=0 AND '+dim1+'='+str(distinctd1[0])+' ORDER BY '+dim2+' DESC'):
 			ftemp.append(entry[0])
 			ttemp.append(dim1[:1]+'='+str(entry[1])+', '+dim2[:1]+'='+str(entry[2]))
 			#print "current entry:", entry
@@ -120,9 +120,10 @@ for column in tlist:
 		print tuple
 
 print len(flist), len(flist[0])
+print flist[0],flist[1]
 	
 # Read from files and plot
-fig = plt.figure(num=1, figsize=(14, 7), dpi=100, facecolor='w', edgecolor='k')
+fig = plt.figure(num=1, figsize=(20, 10), dpi=100, facecolor='w', edgecolor='k')
 plt.rc('xtick', labelsize=5)
 plt.rc('ytick', labelsize=5)
 for i in range(ndim1):
@@ -152,7 +153,7 @@ for i in range(ndim1):
 plt.suptitle(dim2+" vs "+dim1+", other dim value:"+str(sys.argv[3])+' type:'+celltype+"("+directory+")")
 plt.tight_layout()
 plt.subplots_adjust(left=None, bottom=None, right=None, top=0.9)
-plt.savefig('figures/'+dim2+'_'+dim1+'_'+str(sys.argv[3])+'_'+celltype+'_'+directory+'.png')
-plt.show()
+plt.savefig('figures/'+dim2+'_'+dim1+'_'+str(sys.argv[3])+'_'+celltype+'_'+directory+'_big.png')
+#plt.show()
 # conn.commit()
 conn.close()

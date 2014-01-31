@@ -103,8 +103,12 @@ print dim2, d2s
 for d1 in d1s:
 	ktemp = []
 	for d2 in d2s:
-		entry = c.execute('SELECT kappa FROM subspace WHERE '+dim1+'=? AND '+dim2+'=? \
-							ORDER BY trial DESC',(d1[0],d2[0])).fetchall()
+		if len(sys.argv)>5:
+			entry = c.execute('SELECT freq FROM subspace WHERE '+dim1+'=? AND '+dim2+'=? \
+								ORDER BY trial DESC',(d1[0],d2[0])).fetchall()
+		else:
+			entry = c.execute('SELECT kappa FROM subspace WHERE '+dim1+'=? AND '+dim2+'=? \
+								ORDER BY trial DESC',(d1[0],d2[0])).fetchall()
 		print len(entry), "trial(s) found for", dim1, d1[0], dim2, d2[0]
 		print entry
 		ktemp.append(np.mean(entry))
@@ -112,7 +116,10 @@ for d1 in d1s:
 conn.close()
 npkappas = np.array(kappas)
 
-print "Kappas averaged over trials:"
+if len(sys.argv)>5:
+	print "Freqs averaged over trials:" 
+else:
+	print "Kappas averaged over trials:"
 print npkappas
 
 cmds = [(np.array(d2s)[:,0].tolist(), npkappas[i].tolist()) for i in range(len(d1s))]
@@ -120,13 +127,14 @@ cmds = [(np.array(d2s)[:,0].tolist(), npkappas[i].tolist()) for i in range(len(d
 fig = plt.figure(facecolor='w', edgecolor='k')
 ax = fig.add_axes([0.1, 0.1, 0.6, 0.75])
 ax.set_xscale('log')
-ax.set_yscale('log')
 ax.set_xticks(np.array(d2s)[:,0].tolist())
 ax.set_xticklabels(np.array(d2s)[:,0].tolist())
-ax.set_yticks([0,0.1,0.2,0.3,0.4,0.5,1])
-ax.set_yticklabels([0,0.1,0.2,0.3,0.4,0.5,1])
-min_kappa=sorted(npkappas[np.where(npkappas>=0)].flatten())[0]
-plt.axis([min(np.array(d2s)[:,0].tolist()),max(np.array(d2s)[:,0].tolist()),min_kappa*0.9,1])
+if len(sys.argv)<=5:
+	ax.set_yscale('log')
+	ax.set_yticks([0,0.1,0.2,0.3,0.4,0.5,1])
+	ax.set_yticklabels([0,0.1,0.2,0.3,0.4,0.5,1])
+	min_kappa=sorted(npkappas[np.where(npkappas>=0)].flatten())[0]
+	plt.axis([min(np.array(d2s)[:,0].tolist()),max(np.array(d2s)[:,0].tolist()),min_kappa*0.9,1])
 labels = [dim1+"="+str(np.array(d1s)[i,0]) for i in range(len(d1s))]
 handles = []
 i = 0
@@ -138,9 +146,12 @@ for cmd in cmds:
 plt.subplots_adjust(left=None, bottom=None, right=None, top=0.95)
 ax.legend(handles, labels, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 
-plt.title(dim1+" vs "+dim2+" "+celltype+"("+directory+")")
+plt.title(dim1+" vs "+dim2+' other dim value:'+str(sys.argv[3])+" "+celltype+"("+directory+")")
 plt.ylabel("Kappa")
 plt.xlabel(dim2)
 
-plt.savefig("figures/"+"lines_"+dim1+"_"+dim2+"_"+directory+"_"+celltype+".png")
+if len(sys.argv)>5:
+	plt.savefig("figures/"+"lines_FREQ_"+dim1+"_"+dim2+'_'+str(sys.argv[3])+"_"+directory+"_"+celltype+".png")
+else:
+	plt.savefig("figures/"+"lines_"+dim1+"_"+dim2+'_'+str(sys.argv[3])+"_"+directory+"_"+celltype+".png")
 plt.show()

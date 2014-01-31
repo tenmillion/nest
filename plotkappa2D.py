@@ -102,13 +102,22 @@ print dim2, d2s
 for d1 in d1s:
 	ktemp = []
 	for d2 in d2s:
-		entry = c.execute('SELECT kappa FROM subspace WHERE '+dim1+'=? AND '+dim2+'=? \
-							ORDER BY trial DESC',(d1[0],d2[0])).fetchall()
-		print len(entry), "trial(s) found for", dim1, d1[0], dim2, d2[0]
-		print entry, np.mean(entry)
-		npentry = np.array(entry)
-		print npentry > 0
-		ktemp.append(np.mean(npentry.clip(0,1)))
+		if len(sys.argv)>5:
+			entry = c.execute('SELECT freq FROM subspace WHERE '+dim1+'=? AND '+dim2+'=? \
+								ORDER BY trial DESC',(d1[0],d2[0])).fetchall()
+			print len(entry), "trial(s) found for", dim1, d1[0], dim2, d2[0]
+			print entry, np.mean(entry)
+			npentry = np.array(entry)
+			print npentry > 0
+			ktemp.append(np.mean(npentry))
+		else:
+			entry = c.execute('SELECT kappa FROM subspace WHERE '+dim1+'=? AND '+dim2+'=? \
+								ORDER BY trial DESC',(d1[0],d2[0])).fetchall()
+			print len(entry), "trial(s) found for", dim1, d1[0], dim2, d2[0]
+			print entry, np.mean(entry)
+			npentry = np.array(entry)
+			print npentry > 0
+			ktemp.append(np.mean(npentry.clip(0,1)))
 	kappas.append(ktemp)
 conn.close()
 npkappas = np.array(kappas)
@@ -117,14 +126,17 @@ npkappas = np.array(kappas)
 #plt.rc('xtick', labelsize=5)
 #plt.rc('ytick', labelsize=5)
 
-print "Kappas averaged over trials:"
+if len(sys.argv)>5:
+	print "Freqs averaged over trials:"
+else:
+	print "Kappas averaged over trials:"
 print npkappas
 
 ###
 
 fig, ax = plt.subplots()
 fig = plt.gcf()
-title(dim1+" vs "+dim2+" "+celltype+"("+directory+")")
+title(dim1+" vs "+dim2+' other dim value:'+str(sys.argv[3])+" "+celltype+"("+directory+")")
 heatmap = ax.pcolor(npkappas)
 ax.axis('tight')
 yticks(np.arange(0,len(d1s),1)+0.5,np.array(d1s)[:,0])
@@ -135,5 +147,8 @@ ax.set_aspect('equal')
 divider = make_axes_locatable(ax)
 cax = divider.append_axes("right", size="5%", pad=0.05)
 colorbar(heatmap,cax=cax)
-savefig("figures/"+"heatmap_"+dim1+"_"+dim2+"_"+directory+"_"+celltype+".png")
+if len(sys.argv)>5:
+	savefig("figures/"+"heatmap_FREQ_"+dim1+"_"+dim2+'_'+str(sys.argv[3])+"_"+directory+"_"+celltype+".png", facecolor='w')
+else:
+	savefig("figures/"+"heatmap_"+dim1+"_"+dim2+'_'+str(sys.argv[3])+"_"+directory+"_"+celltype+".png", facecolor='w')
 show()

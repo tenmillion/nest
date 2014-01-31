@@ -9,7 +9,7 @@ import re
 if not os.path.isfile('output.db'):
 	conn = sql.connect('output.db')
 	c = conn.cursor()
-	c.execute('''CREATE TABLE output (filename text PRIMARY KEY, dir text, thres int, phi real, iext real, ji real, je real, jis real, ni int, ne int, mi real, me real, type text, trial int, kappa real)''')
+	c.execute('''CREATE TABLE output (filename text PRIMARY KEY, dir text, thres int, phi real, iext real, ji real, je real, jis real, ni int, ne int, mi real, me real, type text, trial text, kappa real)''')
 	print "Created table"
 else:
 	conn = sql.connect('output.db')
@@ -42,7 +42,7 @@ for x in glob.glob('output/*/*/*.txt'):
 	mi_x = re.search('MsynI([0-9]+\.[0-9]+)',x).group(1)			#
 	me_x = re.search('MsynE([0-9]+\.[0-9]+)',x).group(1)			#
 	type_x = re.search('brunel\-py\-(ex|in)',x).group(1)		#
-	trial_x = re.search('([0-9]+)\.txt',x).group(1)				#
+	trial_x = re.search('_([0-9]+\-[0-9]+\-[0-9]+)_',x).group(1)				#
 	entry = [(x, dir_x, thres_x, phi_x, iext_x, ji_x, je_x, jis_x, ni_x, ne_x, mi_x, me_x, type_x, trial_x),]
 	#print entry
 	
