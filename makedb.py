@@ -25,6 +25,9 @@ nadded = 0
 nskipped = 0
 ndups = 0
 
+for x in glob.glob('output/*/*/*.gdf'):
+	os.rename(x,x[:-3]+'txt')
+
 for x in glob.glob('output/*/*/*.txt'):
 	x = x.replace("\\","/")
 	dir_x = re.search('output/([a-z]+_?[a-z]*)/',x).group(1)			#
