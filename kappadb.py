@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 # Script to compute kappa from a database of spikes and to write the values to the database.
 # Adapted for the NEST simulation.
-# sample input: python kappadb.py d1 d2 type
+# sample input: python kappadb.py d1 d2 d3default type
 # Y Yamamura Jan 29, 2014
 
 import sqlite3 as sql
@@ -32,13 +32,13 @@ print 'Creating 2D supspace...'
 c.execute('DROP TABLE IF EXISTS t1')
 c.execute('DROP TABLE IF EXISTS subspace')
 
-if sys.argv[3] == 'both':
+if sys.argv[4] == 'both':
 	ni = 100
 	ne = 400
 	celltype = 'in' # Todo: plot both in same fig
 	directory = 'both'
 
-elif sys.argv[3] == 'ex':
+elif sys.argv[4] == 'ex':
 	ni = 0
 	ne = 400
 	celltype = 'ex'
@@ -52,8 +52,8 @@ else:
 
 thres = 0 # Todo: variable thres
 
-dim1 = sys.argv[1]
-dim2 = sys.argv[2]
+dim1 = sys.argv[2]
+dim2 = sys.argv[1]
 
 cmd = 'WHERE'
 if (dim1 != 'phi') and (dim2 != 'phi'):
@@ -63,13 +63,13 @@ if (dim1 != 'iext') and (dim2 != 'iext'):
 	iext = 100.
 	cmd+=' iext='+str(iext)+' AND'
 if (dim1 != 'ji') and (dim2 != 'ji'):
-	ji = 5.
+	ji = float(argv[3])
 	cmd+=' ji='+str(ji)+' AND'
 if (dim1 != 'je') and (dim2 != 'je'):
 	je = 2.
 	cmd+=' je='+str(je)+' AND'
 if (dim1 != 'mi') and (dim2 != 'mi'):
-	mi = 25.
+	mi = float(argv[3])
 	cmd+=' mi='+str(mi)+' AND'
 if (dim1 != 'me') and (dim2 != 'me'):
 	me = 10.
