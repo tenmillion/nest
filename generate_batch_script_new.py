@@ -37,25 +37,26 @@ def makecommand(direc,subdir,phi_,Iext_,JI_,JE_,MsynI_,MsynE_,NI_,NE_):
 NI=100
 NE=0
 direc = "inh_only"
-lines = 0
 je = 2.0 # not used
 me = 10. # not used
 
 subdir = "MI_JI_phi"
-fh = open(direc+"_"+subdir+"_JI="+str(JI[0])+".sh", 'w')
+fh = open(direc+"_"+subdir+"_JI"+str(0)+".sh", 'w')
+lines = 0
 print >>fh, "mkdir output/"+direc
 print >>fh, "mkdir figures/"+direc
 print >>fh, "mkdir output/"+direc+"/"+subdir
 print >>fh, "mkdir figures/"+direc+"/"+subdir
 for Jn in range(len(JI)):
+ lines = 0
  for MM in MI:
   for PP in phi:
    print >>fh, makecommand(direc,subdir,PP,Iext,JI[Jn],je,MM,me,NI,NE)
    lines += 1
  fh.close()
- print "Generated shell script", direc+"_"+subdir+"_JI="+str(JI[Jn])+".sh with", lines, "lines"
+ print "Generated shell script", direc+"_"+subdir+"_JI"+str(Jn)+".sh with", lines, "lines"
  try:
-  fh = open(direc+"_"+subdir+"_JI="+str(JI[Jn+1])+".sh", 'w')
+  fh = open(direc+"_"+subdir+"_JI="+str(Jn+1)+".sh", 'w')
  except:
   print "Reached end of JI:", JI[Jn], "at", Jn
 
