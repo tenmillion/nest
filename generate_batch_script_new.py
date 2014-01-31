@@ -56,7 +56,7 @@ for Jn in range(len(JI)):
  fh.close()
  print "Generated shell script", direc+"_"+subdir+"_JI"+str(Jn)+".sh with", lines, "lines"
  try:
-  fh = open(direc+"_"+subdir+"_JI="+str(Jn+1)+".sh", 'w')
+  fh = open(direc+"_"+subdir+"_JI"+str(Jn+1)+".sh", 'w')
  except:
   print "Reached end of JI:", JI[Jn], "at", Jn
 
