@@ -11,13 +11,17 @@ import numpy as np
 phi = np.array([5*3**((k-37)/10.) for k in np.arange(10,41,3)]) # temperature
 print phi
 
-i = 1.0
+Iext = 1.0
+print Iext
 
-MsynI = np.array([100, 60, 40, 25, 10])    # mean connectivity in %
-JI = np.array([5.0, 2.0, 1.0, 0.5, 0.1]) # synaptic weight (unit nS)
+MI = np.array([100, 60, 50, 40, 30, 20, 10, 0])    # mean connectivity in %
+JI = np.array([2.1, 1.8, 1.5, 1.2, 0.9, 0.6, 0.3, 0.1]) # synaptic weight (unit nS)
 
-MsynIepi = np.array([1., 0.8, 0.6, 0.4, 0.2])*25.
-MsynEepi = np.array([1+k*3./4. for k in np.arange(0,5,1)])*10.  # multiplication factor of excitatory connections (baseline 10%, up to 40%)
+print MI
+print JI
+
+MIepi = np.array([1., 0.8, 0.6, 0.4, 0.2])*25.
+MEepi = np.array([1+k*3./4. for k in np.arange(0,5,1)])*10.  # multiplication factor of excitatory connections (baseline 10%, up to 40%)
 JIepi = np.array([1.0, 0.8, 0.6, 0.4, 0.2])*2. # synaptic weight (unit nS)
 JEepi = np.array([1.0, 1.1, 1.5, 2.0, 4.0])*5. # synaptic weight (unit nS)
 #Iext = np.array([10, 1., 0.5])  # external input current
@@ -36,86 +40,22 @@ direc = "inh_only"
 lines = 0
 je = 2.0 # not used
 me = 10. # not used
-fh = open(direc+".sh", 'w')
 
-#MsynI and phi (JI fixed)
-subdir = "MI_phi"
+subdir = "MI_JI_phi"
+fh = open(direc+"_"+subdir+"_JI="+str(JI[0])+".sh", 'w')
+print >>fh, "mkdir output/"+direc
+print >>fh, "mkdir figures/"+direc
 print >>fh, "mkdir output/"+direc+"/"+subdir
 print >>fh, "mkdir figures/"+direc+"/"+subdir
-ji = 5.0
-for MM in MsynI:
- for PP in phi:
-  print >>fh, makecommand(direc,subdir,PP,i,ji,je,MM,me,NI,NE)
-  lines += 1
+for Jn in range(len(JI)):
+ for MM in MI:
+  for PP in phi:
+   print >>fh, makecommand(direc,subdir,PP,Iext,JI[Jn],je,mi,me,NI,NE)
+   lines += 1
+ fh.close()
+ print "Generated shell script", direc+"_"+subdir+"_JI="+str(JI[Jn])+".sh with", lines, "lines"
+ try:
+  fh = open(direc+"_"+subdir+"_JI="+str(JI[Jn+1])+".sh", 'w')
+ except:
+  print "Reached end of JI:", JI[Jn], "at", Jn
 
-#JI and phi (MsynI fixed)
-subdir = "JI_phi"
-print >>fh, "mkdir output/"+direc+"/"+subdir
-print >>fh, "mkdir figures/"+direc+"/"+subdir
-mi = 25.
-for JJ in JI:
- for PP in phi:
-  print >>fh, makecommand(direc,subdir,PP,i,JJ,je,mi,me,NI,NE)
-  lines += 1
-
-fh.close()
-print "Generated shell script", direc+".sh with", lines, "lines"
-
-##########################
-# Mixed networks
-NI=100
-NE=400
-direc = "both"
-lines = 0
-fh = open(direc+".sh", 'w')
-
-#MsynI and phi (MsynE, JI, JE fixed)
-subdir = "MI_phi"
-print >>fh, "mkdir output/"+direc+"/"+subdir
-print >>fh, "mkdir figures/"+direc+"/"+subdir
-ji = 5.0
-je = 2.0
-me = 10.
-for MM in MsynIepi:
- for PP in phi:
-  print >>fh, makecommand(direc,subdir,PP,i,ji,je,MM,me,NI,NE)
-  lines += 1
-
-#MsynE and phi (MsynI, JI, JE fixed)
-subdir = "ME_phi"
-print >>fh, "mkdir output/"+direc+"/"+subdir
-print >>fh, "mkdir figures/"+direc+"/"+subdir
-ji = 5.0
-je = 2.0
-mi = 25.
-for MM in MsynEepi:
- for PP in phi:
-  print >>fh, makecommand(direc,subdir,PP,i,ji,je,mi,MM,NI,NE)
-  lines += 1
-
-#JI and phi (MsynI, MsynE, JE fixed)
-subdir = "JI_phi"
-print >>fh, "mkdir output/"+direc+"/"+subdir
-print >>fh, "mkdir figures/"+direc+"/"+subdir
-je = 2.0
-mi = 25.
-me = 10.
-for JJ in JIepi:
- for PP in phi:
-  print >>fh, makecommand(direc,subdir,PP,i,JJ,je,mi,me,NI,NE)
-  lines += 1
-
-#JE and phi (MsynI, MsynE, JI fixed)
-subdir = "JE_phi"
-print >>fh, "mkdir output/"+direc+"/"+subdir
-print >>fh, "mkdir figures/"+direc+"/"+subdir
-ji = 5.0
-mi = 25.
-me = 10.
-for JJ in JEepi:
- for PP in phi:
-  print >>fh, makecommand(direc,subdir,PP,i,ji,JJ,mi,me,NI,NE)
-  lines += 1
-
-fh.close()
-print "Generated shell script", direc+".sh with", lines, "lines"
