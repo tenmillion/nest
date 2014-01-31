@@ -41,7 +41,7 @@ V_init	= -60.	# Initial membrane potential
 V_range = 20.	# Range of initial membrane potential
 delay   = 1.5   # synaptic delay in ms
 d_range = 0.	# Range of synaptic delay (0 to 1)
-thres = 35.	# Threshold of spike detection?
+thres = 0.	# Threshold of spike detection?
 
 N_neurons = N_E+N_I
 starttime = 0.

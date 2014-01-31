@@ -48,7 +48,7 @@ else:
 	celltype = 'in'
 	directory = 'inh_only'
 
-thres = 35 # Todo: variable thres
+thres = 0 # Todo: variable thres
 
 dim1 = sys.argv[1]
 dim2 = sys.argv[2]
