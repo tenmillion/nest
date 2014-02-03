@@ -66,14 +66,14 @@ endtime = 1300.
 N_rec = 50    # Number of neurons to record from
 
 if N_E > 0:
- p_conn_EE = M_syn_EE/N_E. # Probability of a synapse existing between ex-ex
- p_conn_EI = M_syn_EI/N_E.
+ p_conn_EE = M_syn_EE/N_E # Probability of a synapse existing between ex-ex
+ p_conn_EI = M_syn_EI/N_E
 else:
  p_conn_EE = 0.
  p_conn_EI = 0.
 if N_I > 0:
- p_conn_IE = M_syn_IE/N_I.
- p_conn_II = M_syn_II/N_I.
+ p_conn_IE = M_syn_IE/N_I
+ p_conn_II = M_syn_II/N_I
 else:
  p_conn_IE = 0.
  p_conn_II = 0.
