@@ -12,7 +12,10 @@ import numpy as np
 phi = np.array([5*3**(k/10.) for k in np.arange(-36,1,3)]) # temperature -37 degC
 print phi
 
-Iext = 0.1
+#Iext = 0.1
+Iext = 0.16
+#Iext = 0.165
+#Iext = 0.17
 print Iext
 
 MI = np.array([100, 60, 50, 40, 30, 20, 10, 0])    # mean connectivity in %
