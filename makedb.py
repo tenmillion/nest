@@ -9,7 +9,7 @@ import re
 if not os.path.isfile('output.db'):
 	conn = sql.connect('output.db')
 	c = conn.cursor()
-	c.execute('''CREATE TABLE output (filename text PRIMARY KEY, dir text, thres int, phi real, iext real, ji real, je real, jis real, ni int, ne int, mi real, me real, type text, trial text, kappa real)''')
+	c.execute('''CREATE TABLE output (filename text PRIMARY KEY, dir text, thres int, phi real, iext real, ji real, je real, jis real, ni int, ne int, mi real, me real, type text, trial text, kappa real, freq real)''')
 	print "Created table"
 else:
 	conn = sql.connect('output.db')
@@ -59,7 +59,7 @@ for x in glob.glob('output/*/*/*.txt'):
 	overlap=c.fetchall()
 	
 	if count==0:
-		c.executemany('INSERT INTO output VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,-1)', entry)
+		c.executemany('INSERT INTO output VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,-1,-1)', entry)
 		nadded += 1
 	else:
 		print "Overlapping parameters", x

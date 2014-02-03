@@ -31,7 +31,7 @@ numcells = 50.
 conn = sql.connect('output.db')
 c = conn.cursor()
 
-c.execute('ALTER TABLE output ADD COLUMN freq real')
+#c.execute('ALTER TABLE output ADD COLUMN freq real')
 
 counter = 0
 for f in glob.glob('output/*/*/*.txt'):	

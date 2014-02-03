@@ -58,7 +58,7 @@ if (dim1 != 'phi') and (dim2 != 'phi'):
 	phi = 5. #Assume this value if phi is fixed
 	cmd+=' phi='+str(phi)+' AND'
 if (dim1 != 'iext') and (dim2 != 'iext'):
-	iext = 10.
+	iext = 16.5
 	cmd+=' iext='+str(iext)+' AND'
 if (dim1 != 'ji') and (dim2 != 'ji'):
 	ji = float(sys.argv[3])

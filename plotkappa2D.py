@@ -61,7 +61,7 @@ if (dim1 != 'phi') and (dim2 != 'phi'):
 	phi = 5. #Assume this value if phi is fixed
 	cmd+=' phi='+str(phi)+' AND'
 if (dim1 != 'iext') and (dim2 != 'iext'):
-	iext = 100.
+	iext = 16.5
 	cmd+=' iext='+str(iext)+' AND'
 if (dim1 != 'ji') and (dim2 != 'ji'):
 	ji = float(sys.argv[3])
@@ -76,10 +76,6 @@ if (dim1 != 'me') and (dim2 != 'me'):
 	me = 10.
 	cmd+=' me='+str(me)+' AND'
 cmd+=' thres='+str(thres)
-
-tstart = 1000
-tstop = 1300
-binwidth = 1.
 
 print cmd
 
