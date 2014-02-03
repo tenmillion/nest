@@ -3,6 +3,7 @@
 # my_brunel2000_rand_hh.py
 #
 # Temperature-enabled Hodgkin-Huxley network, based on Wang-Buzsaki 1996 and Brunel 2000.
+# Feb 3 - Now normalizing J_I, J_E by M_syn. See if this is any different.
 
 #import NeuroTools.signals # Needs to load before nest, or python core dumps. Not sure why.
 #import NeuroTools.io # Needs latest version of NeuroTools downloaded thru svn
@@ -18,7 +19,7 @@ import os
 
 # Network parameters. Some of these are given in Brunel (2000) J.Comp.Neuro.
 phi	   = float(sys.argv[1])    # Default 1.
-# g      = float(sys.argv[2])    # Ratio of IPSP to EPSP amplitude: J_I/J_E
+# g      = float(sys.argv[2])    # Ratio of IPSP to EPSP amplitude: J_I/J_E (superceded by J_E)
 I_ext  = float(sys.argv[2])*100.  # Applied current in pA (default 1 uA/cm^2 = 100 pA)
 Is_ext = float(sys.argv[3])*100.  # SD of I_ext in pA (scaled by 100 from original uA/cm^2)
 J_I    = float(sys.argv[4])*(-1.) # 5.0 nS in NEST
@@ -30,7 +31,7 @@ N_I = int(sys.argv[8])
 N_E = int(sys.argv[9])
 
 M_syn_EI = M_syn_II
-M_syn_IE = M_syn_II
+M_syn_IE = M_syn_EE
 
 plotdistribs = False
 plotresults = True
@@ -65,14 +66,14 @@ endtime = 1300.
 N_rec = 50    # Number of neurons to record from
 
 if N_E > 0:
- p_conn_EE = M_syn_EE/100. # Probability of a synapse existing between ex-ex
- p_conn_EI = M_syn_EI/100.
+ p_conn_EE = M_syn_EE/N_E. # Probability of a synapse existing between ex-ex
+ p_conn_EI = M_syn_EI/N_E.
 else:
  p_conn_EE = 0.
  p_conn_EI = 0.
 if N_I > 0:
- p_conn_IE = M_syn_IE/100.
- p_conn_II = M_syn_II/100.
+ p_conn_IE = M_syn_IE/N_I.
+ p_conn_II = M_syn_II/N_I.
 else:
  p_conn_IE = 0.
  p_conn_II = 0.
@@ -88,6 +89,16 @@ fnprefix = str('T%dmV'%thres)+str('phi%.3f'%phi)+str('in%.1fpA'%I_ext)+\
 		   str('_JI%.1f'%J_I)+str('_JE%.1f'%J_E)+str('+-%.1f_'%J_range)+\
 		   str('E%d'%N_E)+str('I%d'%N_I)+str('_MsynI%.1f'%M_syn_II)+str('_MsynE%.1f'%M_syn_EE)+tstr
 nest.SetKernelStatus({"data_path": "output/"+dirname+"/"+subdirname, "data_prefix": fnprefix})
+
+# Internally normalize weights by Msyn
+if M_syn_II>0:
+ J_I = J_I/M_syn_II
+else: # Not used anyway
+ J_I = J_I
+if M_syn_EE>0:
+ J_E = J_E/M_syn_EE
+else: # Not used anyway
+ J_E = J_E
 
 # Create and seed RNGs
 ms = 1000 # master seed
