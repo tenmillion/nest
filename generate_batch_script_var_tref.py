@@ -9,7 +9,7 @@
 #subdir = [connectivity, inh_weights, exc_weights] # for both
 import numpy as np
 
-phi = np.array([5*3**((k-37)/10.) for k in np.arange(0,40,3)]) # temperature
+phi = np.array([5*3**(k/10.) for k in np.arange(-36,1,3)]) # temperature -37 degC
 print phi
 
 Iext = 0.1
@@ -41,7 +41,7 @@ direc = "inh_only"
 je = 2.0 # not used
 me = 10. # not used
 
-subdir = "MI_JI_phi_i01"
+subdir = "MI_JI_i01"
 fh = open(direc+"_"+subdir+"_JI"+str(0)+".sh", 'w')
 lines = 0
 print >>fh, "mkdir output/"+direc
