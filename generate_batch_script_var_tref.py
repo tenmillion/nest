@@ -44,7 +44,11 @@ direc = "inh_only"
 je = 2.0 # not used
 me = 10. # not used
 
-subdir = "MI_JI_i01"
+#subdir = "MI_JI_i01"
+subdir = "MI_JI_i016"
+#subdir = "MI_JI_i0165"
+#subdir = "MI_JI_i017"
+
 fh = open(direc+"_"+subdir+"_JI"+str(0)+".sh", 'w')
 lines = 0
 print >>fh, "mkdir output/"+direc
