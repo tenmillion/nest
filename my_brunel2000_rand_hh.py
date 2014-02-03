@@ -36,7 +36,13 @@ plotdistribs = False
 plotresults = True
 sortIext = True
 
-if phi < 0.3:
+if phi < 0.1:
+ tref = 24.0
+elif phi < 0.15:
+ tref = 18.0
+elif phi < 0.2:
+ tref = 12.0
+elif phi < 0.3:
  tref = 8.0
 elif phi < 0.7:
  tref = 6.0

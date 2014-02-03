@@ -9,10 +9,10 @@
 #subdir = [connectivity, inh_weights, exc_weights] # for both
 import numpy as np
 
-phi = np.array([5*3**((k-37)/10.) for k in np.arange(0,39,3)]) # temperature
+phi = np.array([5*3**((k-37)/10.) for k in np.arange(0,40,3)]) # temperature
 print phi
 
-Iext = 1.0
+Iext = 0.1
 print Iext
 
 MI = np.array([100, 60, 50, 40, 30, 20, 10, 0])    # mean connectivity in %
@@ -28,7 +28,7 @@ JEepi = np.array([1.0, 1.1, 1.5, 2.0, 4.0])*5. # synaptic weight (unit nS)
 #Iext = np.array([10, 1., 0.5])  # external input current
 
 def makecommand(direc,subdir,phi_,Iext_,JI_,JE_,MsynI_,MsynE_,NI_,NE_):
- cmd='python my_brunel2000_rand_hh.py {:.2f} {:.1f} 0 {:.1f} {:.1f} {:.1f} {:.1f} {} {} '.\
+ cmd='python my_brunel2000_rand_hh.py {:.3f} {:.1f} 0 {:.1f} {:.1f} {:.1f} {:.1f} {} {} '.\
      format(phi_,Iext_,JI_,JE_,MsynI_,MsynE_,NI_,NE_) + direc + ' ' + subdir
  return cmd
 
@@ -41,7 +41,7 @@ direc = "inh_only"
 je = 2.0 # not used
 me = 10. # not used
 
-subdir = "MI_JI_phi"
+subdir = "MI_JI_phi_i01"
 fh = open(direc+"_"+subdir+"_JI"+str(0)+".sh", 'w')
 lines = 0
 print >>fh, "mkdir output/"+direc

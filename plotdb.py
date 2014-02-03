@@ -74,7 +74,7 @@ if (dim1 != 'me') and (dim2 != 'me'):
 	cmd+=' me='+str(me)+' AND'
 cmd+=' thres='+str(thres)
 
-tstart = 0
+tstart = 1000
 tstop = 1300
 binwidth = 1.
 
