@@ -36,6 +36,15 @@ plotdistribs = False
 plotresults = True
 sortIext = True
 
+if phi < 0.3:
+ tref = 8.0
+elif phi < 0.7:
+ tref = 6.0
+elif phi < 3.5:
+ tref = 2.0
+else:
+ tref = 1.0
+
 J_range = 0.	# Range of synaptic weight (0 to 1)
 V_init	= -60.	# Initial membrane potential
 V_range = 20.	# Range of initial membrane potential
@@ -99,6 +108,7 @@ nest.SetDefaults("hh_cond_exp_traub", # Using Wang-Buzsaki
 				  "tau_syn_ex": 10., # var?
 				  "tau_syn_in": 10., # var?
 				  "V_T": thres, # var
+				  "t_ref": tref, # Change t_ref according to phi
                   "V_1": 35.0, 
                   "V_2": 60.0,
                   "V_3": 58.0,
