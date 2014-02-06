@@ -41,7 +41,7 @@ for f in glob.glob('output/*/*/*.txt'):
 		print f[15:-15],"k corrected to -1"
 	counter += 1
 	print counter, k
-	c.execute('UPDATE output SET kappa=? WHERE filename=?', (k, f))
+	c.execute('UPDATE output SET kappa=? WHERE filename=? AND kappa < 0', (k, f))
 conn.commit()
 conn.close()
 print "Wrote", counter, "kappas to DB"

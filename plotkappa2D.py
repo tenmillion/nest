@@ -35,11 +35,11 @@ print 'Creating 2D supspace...'
 c.execute('DROP TABLE IF EXISTS t1')
 c.execute('DROP TABLE IF EXISTS subspace')
 
-if sys.argv[4] == 'both':
+if sys.argv[4] == 'mixed':
 	ni = 100
 	ne = 400
-	celltype = 'in' # Todo: plot both in same fig
-	directory = 'both'
+	celltype = 'ex' # Todo: plot both in same fig
+	directory = 'mixed'
 
 elif sys.argv[4] == 'ex':
 	ni = 0
@@ -61,20 +61,29 @@ if (dim1 != 'phi') and (dim2 != 'phi'):
 	phi = 5. #Assume this value if phi is fixed
 	cmd+=' phi='+str(phi)+' AND'
 if (dim1 != 'iext') and (dim2 != 'iext'):
-	iext = 16.5
+	iext = 100.
 	cmd+=' iext='+str(iext)+' AND'
-if (dim1 != 'ji') and (dim2 != 'ji'):
+
+if (sys.argv[4]=='mixed'):
+	ji = 1.
+	cmd+=' ji='+str(ji)+' AND'
+elif (dim1 != 'ji') and (dim2 != 'ji'):
 	ji = float(sys.argv[3])
 	cmd+=' ji='+str(ji)+' AND'
-if (dim1 != 'je') and (dim2 != 'je'):
+
+if (sys.argv[4]=='mixed'):
+	je = float(sys.argv[3])
+	cmd+=' je='+str(je)+' AND'
+elif (dim1 != 'je') and (dim2 != 'je'):
 	je = 2.
 	cmd+=' je='+str(je)+' AND'
+
 if (dim1 != 'mi') and (dim2 != 'mi'):
 	mi = float(sys.argv[3])
 	cmd+=' mi='+str(mi)+' AND'
-if (dim1 != 'me') and (dim2 != 'me'):
-	me = 10.
-	cmd+=' me='+str(me)+' AND'
+#if (dim1 != 'me') and (dim2 != 'me'):
+#	me = float(sys.argv[3])
+#	cmd+=' me='+str(me)+' AND'
 cmd+=' thres='+str(thres)
 
 print cmd
@@ -137,18 +146,19 @@ else:
 fig, ax = plt.subplots()
 fig = plt.gcf()
 title(dim1+" vs "+dim2+' other dim value:'+str(sys.argv[3])+" "+celltype+"("+directory+")")
-heatmap = ax.pcolor(npkappas)
+heatmap = ax.pcolor(npkappas,cmap=get_cmap("Greys"))
 ax.axis('tight')
 yticks(np.arange(0,len(d1s),1)+0.5,np.array(d1s)[:,0])
 ylabel(dim1)
-xticks(np.arange(0,len(d2s),1)+0.5,np.array(d2s)[:,0])
+xticks(np.arange(0,len(d2s),1)+0.5,np.array(d2s)[:,0],size=9)
 xlabel(dim2)
 ax.set_aspect('equal')
 divider = make_axes_locatable(ax)
 cax = divider.append_axes("right", size="5%", pad=0.05)
 colorbar(heatmap,cax=cax)
 if len(sys.argv)>5:
-	savefig("figures/"+"heatmap_FREQ_"+dim1+"_"+dim2+'_'+str(sys.argv[3])+"_"+directory+"_"+celltype+".png", facecolor='w')
+	savefig("../../../Thesis/gs_"+"heatmap_FREQ_"+dim1+"_"+dim2+'_'+str(sys.argv[3])+"_"+directory+"_"+celltype+".eps", facecolor='w')
+#	savefig("figures/gs_"+"heatmap_FREQ_"+dim1+"_"+dim2+'_'+str(sys.argv[3])+"_"+directory+"_"+celltype+".eps", facecolor='w')
 else:
-	savefig("figures/"+"heatmap_"+dim1+"_"+dim2+'_'+str(sys.argv[3])+"_"+directory+"_"+celltype+".png", facecolor='w')
+	savefig("../../../Thesis/gs_"+"heatmap_"+dim1+"_"+dim2+'_'+str(sys.argv[3])+"_"+directory+"_"+celltype+".eps", facecolor='w')
 #show()

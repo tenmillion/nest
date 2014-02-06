@@ -18,9 +18,9 @@ Iext = 1.0
 #Iext = 0.17
 print Iext
 
-MI = np.array([100, 80, 60, 50, 40, 30, 20, 10, 0])    # mean connectivity in %
+MI = np.array([100, 60, 50, 40, 30, 20, 10, 0])    # mean connectivity in %
 JI = np.array([100.,50.,10.,5.,1.,0.5,0.1]) # synaptic weight (unit pS)
-gE = np.array([10., 5., 1., 0.5, 0.1])
+gE = np.array([10., 8., 6., 4., 2., 1.])
 # (gE * JI = JE)
 
 print MI
@@ -68,9 +68,9 @@ for Jn in range(len(JI)):
 NI=100
 NE=400
 direc = "mixed"
-JI = JI[0] # Fixed, not decided yet, pick one
+JI = 1 # Fixed
 
-subdir = "M_JE_i10"
+subdir = "M_JE_i10_ji1"
 #subdir = "M_JE_i016"
 #subdir = "M_JE_i0165"
 #subdir = "M_JE_i017"

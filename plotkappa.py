@@ -128,30 +128,48 @@ fig = plt.figure(facecolor='w', edgecolor='k')
 ax = fig.add_axes([0.1, 0.1, 0.6, 0.75])
 ax.set_xscale('log')
 ax.set_xticks(np.array(d2s)[:,0].tolist())
-ax.set_xticklabels(np.array(d2s)[:,0].tolist())
+ax.set_xticklabels(np.arange(-36,1,3))
 if len(sys.argv)<=5:
 	ax.set_yscale('log')
 	ax.set_yticks([0,0.1,0.2,0.3,0.4,0.5,1])
 	ax.set_yticklabels([0,0.1,0.2,0.3,0.4,0.5,1])
 	min_kappa=sorted(npkappas[np.where(npkappas>=0)].flatten())[0]
 	plt.axis([min(np.array(d2s)[:,0].tolist()),max(np.array(d2s)[:,0].tolist()),min_kappa*0.9,1])
-labels = [dim1+"="+str(np.array(d1s)[i,0]) for i in range(len(d1s))]
+labels = []
 handles = []
-i = 0
-for cmd in cmds:
-	i +=1
-	axis1,axis2 = cmd
-	handle,=ax.plot(axis1,axis2,'o-')
-	handles.append(handle)
+#i = 0
+
+print cmds
+
+axis1,axis2 = cmds[0]
+handle,=ax.plot(axis1,axis2,'ko-',markerfacecolor='w')
+handles.append(handle)
+labels.append(r"$M_{syn}$="+str(int(np.array(d1s)[0,0])))
+
+axis1,axis2 = cmds[2]
+handle,=ax.plot(axis1,axis2,'k^-')
+handles.append(handle)
+labels.append(r"$M_{syn}$="+str(int(np.array(d1s)[2,0])))
+
+axis1,axis2 = cmds[-2]
+handle,=ax.plot(axis1,axis2,'ko-')
+handles.append(handle)
+labels.append(r"$M_{syn}$="+str(int(np.array(d1s)[-2,0])))
+
+#for cmd in cmds:
+#	i +=1
+#	axis1,axis2 = cmd
+#	handle,=ax.plot(axis1,axis2,'s-')
+#	handles.append(handle)
 plt.subplots_adjust(left=None, bottom=None, right=None, top=0.95)
 ax.legend(handles, labels, bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
 
-plt.title(dim1+" vs "+dim2+' other dim value:'+str(sys.argv[3])+" "+celltype+"("+directory+")")
-plt.ylabel("Kappa")
-plt.xlabel(dim2)
+plt.title(r"Temperature Dependence of $\kappa$",size=19)
+plt.ylabel(r"$\kappa$",size=20)
+plt.xlabel(r"Relative Temperature ($^{\circ}C$)",size=15)
 
 if len(sys.argv)>5:
-	plt.savefig("figures/"+"lines_FREQ_"+dim1+"_"+dim2+'_'+str(sys.argv[3])+"_"+directory+"_"+celltype+".png")
+	plt.savefig("../../../Thesis/"+"lines_FREQ_"+dim1+"_"+dim2+'_'+str(sys.argv[3])+"_"+directory+"_"+celltype+".png")
 else:
-	plt.savefig("figures/"+"lines_"+dim1+"_"+dim2+'_'+str(sys.argv[3])+"_"+directory+"_"+celltype+".png")
+	plt.savefig("../../../Thesis/"+"lines_"+dim1+"_"+dim2+'_'+str(sys.argv[3])+"_"+directory+"_"+celltype+".eps")
 plt.show()

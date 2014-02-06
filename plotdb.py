@@ -26,15 +26,17 @@ c = conn.cursor()
 # Plot by any two dimensions of the parameter space
 # Parameter range must be rectangular
 
+thres = 0 # Todo: variable thres
+
 print 'Creating 2D supspace...'
 c.execute('DROP TABLE IF EXISTS t1')
 c.execute('DROP TABLE IF EXISTS subspace')
 
-if sys.argv[4] == 'both':
+if sys.argv[4] == 'mixed':
 	ni = 100
 	ne = 400
-	celltype = 'in' # Todo: plot both in same fig
-	directory = 'both'
+	celltype = 'ex' # Todo: plot both in same fig
+	directory = 'mixed'
 
 elif sys.argv[4] == 'ex':
 	ni = 0
@@ -48,8 +50,6 @@ else:
 	celltype = 'in'
 	directory = 'inh_only'
 
-thres = 0 # Todo: variable thres
-
 dim1 = sys.argv[1]
 dim2 = sys.argv[2]
 
@@ -58,23 +58,32 @@ if (dim1 != 'phi') and (dim2 != 'phi'):
 	phi = 5. #Assume this value if phi is fixed
 	cmd+=' phi='+str(phi)+' AND'
 if (dim1 != 'iext') and (dim2 != 'iext'):
-	iext = 16.5
+	iext = 100.
 	cmd+=' iext='+str(iext)+' AND'
-if (dim1 != 'ji') and (dim2 != 'ji'):
+
+if (sys.argv[4]=='mixed'):
+	ji = 10.
+	cmd+=' ji='+str(ji)+' AND'
+elif (dim1 != 'ji') and (dim2 != 'ji'):
 	ji = float(sys.argv[3])
 	cmd+=' ji='+str(ji)+' AND'
-if (dim1 != 'je') and (dim2 != 'je'):
+
+if (sys.argv[4]=='mixed'):
+	je = float(sys.argv[3])
+	cmd+=' je='+str(je)+' AND'
+elif (dim1 != 'je') and (dim2 != 'je'):
 	je = 2.
 	cmd+=' je='+str(je)+' AND'
+
 if (dim1 != 'mi') and (dim2 != 'mi'):
 	mi = float(sys.argv[3])
 	cmd+=' mi='+str(mi)+' AND'
-if (dim1 != 'me') and (dim2 != 'me'):
-	me = 10.
-	cmd+=' me='+str(me)+' AND'
+#if (dim1 != 'me') and (dim2 != 'me'):
+#	me = float(sys.argv[3])
+#	cmd+=' me='+str(me)+' AND'
 cmd+=' thres='+str(thres)
 
-tstart = 0
+tstart = 1000
 tstop = 1300
 binwidth = 1.
 
